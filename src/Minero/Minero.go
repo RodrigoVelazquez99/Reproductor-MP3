@@ -117,25 +117,41 @@ func obtenerEtiquetas(pista *id3v2.Tag, direccion string) ([]string) {
 
 func creaBase() *sql.DB {
   db,_ := sql.Open("sqlite3", "../Base/base.db")
-  nuevaTabla := "CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, title TEXT, performer TEXT)"
-  tabla, _ := db.Prepare(nuevaTabla)
-  tabla.Exec()
-  tabla, _ = db.Prepare("INSERT INTO people (title, performer) VALUES (?, ?)")
-  tabla.Exec("Rod", "Vel")
-  /* rows, _ := db.Query("SELECT id, title, performer FROM people")
-  var id int
-  var primerNombre string
-  var ultimoNombre string
-  for rows.Next() {
-      rows.Scan(&id, &primerNombre, &ultimoNombre)
-      fmt.Println(strconv.Itoa(id) + ": " + primerNombre + " " + ultimoNombre)
-  }*/
+  PERFORMERS_TABLE := "CREATE TABLE IF NOT EXISTS performers (id_performer INTEGER PRIMARY KEY, id_type INTEGER, name TEXT)"
+  performersTable, _ := db.Prepare(PERFORMERS_TABLE)
+  performersTable.Exec()
+  PERSONS_TABLE := "CREATE TABLE IF NOT EXISTS persons (id_person INTEGER PRIMARY KEY, stage_name TEXT, real_name TEXT, birth_date TEXT, death_date TEXT)"
+  personsTable, _ := db.Prepare(PERSONS_TABLE)
+  personsTable.Exec()
+  TYPES_TABLE := "CREATE TABLE IF NOT EXISTS types (id_type INTEGER PRIMARY KEY, description TEXT)"
+  typesTable,_ := db.Prepare(TYPES_TABLE)
+  typesTable.Exec()
+  GROUPS_TABLE := "CREATE TABLE IF NOT EXISTS groups (id_group INTEGER PRIMARY KEY, name TEXT, start_date TEXT, end_date TEXT)"
+  groupsTable,_ := db.Prepare(GROUPS_TABLE)
+  groupsTable.Exec()
+  ALBUMS_TABLE := "CREATE TABLE IF NOT EXISTS albums (id_album INTEGER PRIMARY KEY, path TEXT, name TEXT, year INTEGER)"
+  albumsTable,_ :=  db.Prepare(ALBUMS_TABLE)
+  albumsTable.Exec()
+  ROLAS_TABLE := "CREATE TABLE IF NOT EXISTS rolas (id_rola INTEGER PRIMARY KEY, id_performer INTEGER, id_album INTEGER, path TEXT, title TEXT, track INTEGER, year INTEGER, genre TEXT)"
+  rolasTable,_ := db.Prepare(ROLAS_TABLE)
+  rolasTable.Exec()
+  IN_GROUP_TABLE := "CREATE TABLE IF NOT EXISTS in_group (id_person INTEGER, id_group INTEGER)"
+  inGroupTable,_ := db.Prepare(IN_GROUP_TABLE)
+  inGroupTable.Exec()
   return db
 }
 
 func llenaBase(db *sql.DB)  {
   for _, cancion := range Canciones {
-    tabla, _ := db.Prepare("INSERT INTO people (title, performer) VALUES (?, ?)")
-    tabla.Exec(cancion.titulo, cancion.interprete)
+    tabla, _ := db.Prepare("INSERT INTO rolas (path, title, track, year, genre) VALUES (?, ?, ?, ?, ?)")
+    tabla.Exec(cancion.ruta, cancion.titulo,cancion.track, cancion.año, cancion.genero)
+  }
+  rows,_ := db.Query("SELECT id_rola, title, path FROM rolas")
+  var  titulo string
+  var dir string
+  var id int
+  for rows.Next() {
+    rows.Scan(&id, &titulo, &dir)
+    fmt.Println(strconv.Itoa(id) + ": " + titulo + " " + dir)
   }
 }
