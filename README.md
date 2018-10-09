@@ -24,6 +24,10 @@ $ go get -u github.com/bogem/id3v2
 ```bash
 $ go get github.com/gotk3/gotk3/gtk
 ```
+```bash
+$ go get github.com/mattn/go-sqlite3
+```
+
 ### Dependecias
 
 * libgtk-3-dev
