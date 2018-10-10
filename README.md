@@ -43,3 +43,7 @@ $ sudo apt-get install libcairo2-dev
 ```bash
 $ sudo apt-get install libglib2.0-dev
 ```
+```bash
+$ sudo apt-get install build-essential
+```
+
