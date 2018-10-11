@@ -3,10 +3,10 @@ package main
 import(
   "io/ioutil"
   "github.com/bogem/id3v2"
+  "github.com/RodrigoVelazquez99/Reproductor-MP3/src/Etiquetas"
   "database/sql"
   _ "github.com/mattn/go-sqlite3"
   "fmt"
-  "os"
   "strings"
   "strconv"
   "os/user"
@@ -32,29 +32,27 @@ func main() {
     if err != nil {
         log.Fatal( err )
     }
-  fmt.Println( direccion.HomeDir )
-  Canciones := make([]Cancion, 0)
-  buscaArchivos(direccion.HomeDir + "/Music", Canciones)
+  //fmt.Println( direccion.HomeDir )
+  Canciones = make([]Cancion, 0)
+  buscaArchivos(direccion.HomeDir + "/Music")
   base := creaBase()
+  defer base.Close()
   llenaBase(base)
 }
 
-func obtenerCanciones() []Cancion {
-  return Canciones
-}
-
-func buscaArchivos(directorio string, canciones []Cancion) {
+func buscaArchivos(directorio string) {
   archivos, error := ioutil.ReadDir(directorio)
   if error != nil {
     panic(error)
   }
   for _, archivo := range archivos {
     nombre := archivo.Name()
+    ruta := directorio + "/" + nombre
     if strings.Contains(nombre, ".mp3") {
-      creaCancion(directorio + "/" + nombre)
+        creaCancion(ruta)
     }
     if archivo.IsDir() {
-      buscaArchivos(directorio + "/" + nombre, canciones)
+      buscaArchivos(ruta)
     }
   }
 }
@@ -65,7 +63,7 @@ func creaCancion(direccion string) {
     panic(error)
   }
   defer pista.Close()
-  etiquetas := obtenerEtiquetas(pista, direccion)
+  etiquetas := Etiquetas.ObtenerEtiquetas(pista, direccion)
   nuevaCancion := Cancion {
     interprete: etiquetas[0],
     titulo: etiquetas[1],
@@ -75,44 +73,7 @@ func creaCancion(direccion string) {
     track: 0,
     ruta: direccion,
   }
-  agregaCancion(nuevaCancion)
-}
-
-func agregaCancion(cancion Cancion)  {
-  Canciones = append(Canciones, cancion)
-}
-
-func obtenerEtiquetas(pista *id3v2.Tag, direccion string) ([]string) {
-  etiquetas := make([]string, 0)
-  if pista.Artist() == "" {
-    etiquetas = append(etiquetas, "Unknown")
-  } else {
-    etiquetas = append(etiquetas, pista.Artist())
-  }
-  if pista.Title() == "" {
-    etiquetas = append(etiquetas, "Unknown")
-  } else {
-    etiquetas = append(etiquetas, pista.Title())
-  }
-  if pista.Album() == "" {
-    etiquetas = append(etiquetas, "Unknown")
-  } else {
-    etiquetas = append(etiquetas, pista.Album())
-  }
-  if pista.Year() == "" {
-    f,_ := os.Stat(direccion)
-    t := f.ModTime()
-    año := t.Year()
-    etiquetas = append(etiquetas, strconv.Itoa(año))
-  } else {
-    etiquetas = append(etiquetas, pista.Year())
-  }
-  if pista.Genre() == "" {
-    etiquetas = append(etiquetas, "Unknow")
-  } else {
-    etiquetas = append(etiquetas, pista.Genre())
-  }
-  return etiquetas
+  Canciones = append(Canciones, nuevaCancion)
 }
 
 func creaBase() *sql.DB {
@@ -143,11 +104,15 @@ func creaBase() *sql.DB {
 
 func llenaBase(db *sql.DB)  {
   for _, cancion := range Canciones {
+    i,_ := db.Query("SELECT path FROM rolas WHERE path=?",cancion.ruta)
+    if i.Next() {
+      continue
+    }
     tabla, _ := db.Prepare("INSERT INTO rolas (path, title, track, year, genre) VALUES (?, ?, ?, ?, ?)")
     tabla.Exec(cancion.ruta, cancion.titulo,cancion.track, cancion.año, cancion.genero)
   }
   rows,_ := db.Query("SELECT id_rola, title, path FROM rolas")
-  var  titulo string
+  var titulo string
   var dir string
   var id int
   for rows.Next() {
