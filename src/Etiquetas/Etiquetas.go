@@ -8,7 +8,8 @@ import(
 
 /* Maneja las etiquetas de las canciones */
 
- func ObtenerEtiquetas(pista *id3v2.Tag, direccion string) ([]string) {
+ func ObtenerEtiquetas(pista *id3v2.Tag, direccion string) ([]string, int) {
+   var año int
    etiquetas := make([]string, 0)
    if pista.Artist() == "" {
      etiquetas = append(etiquetas, "Unknown")
@@ -28,15 +29,14 @@ import(
    if pista.Year() == "" {
      f,_ := os.Stat(direccion)
      t := f.ModTime()
-     año := t.Year()
-     etiquetas = append(etiquetas, strconv.Itoa(año))
+     año = t.Year()
    } else {
-     etiquetas = append(etiquetas, pista.Year())
+     año,_ = strconv.Atoi(pista.Year())
    }
    if pista.Genre() == "" {
      etiquetas = append(etiquetas, "Unknow")
    } else {
      etiquetas = append(etiquetas, pista.Genre())
    }
-   return etiquetas
+   return etiquetas, año
  }

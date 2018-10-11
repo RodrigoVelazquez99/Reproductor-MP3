@@ -18,6 +18,9 @@ Los paquetes van en el directorio `$GOPATH`
 ```bash
 $ go get github.com/RodrigoVelazquez99/Reproductor-MP3
 ```
+
+### Bibliotecas
+
 ```bash
 $ go get -u github.com/bogem/id3v2
 ```
@@ -46,4 +49,3 @@ $ sudo apt-get install libglib2.0-dev
 ```bash
 $ sudo apt-get install build-essential
 ```
-
