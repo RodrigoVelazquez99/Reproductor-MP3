@@ -6,9 +6,9 @@ import(
   "github.com/RodrigoVelazquez99/Reproductor-MP3/src/Etiquetas"
   "database/sql"
   _ "github.com/mattn/go-sqlite3"
-  //"fmt"
+  "fmt"
   "strings"
-  //"strconv"
+  "strconv"
   "os/user"
   "log"
 )
@@ -111,6 +111,7 @@ func creaBase() *sql.DB {
 
 func llenaBase(db *sql.DB)  {
   llenaRolas(db)
+  llenaAlbumes(db)
 }
 
 func llenaInterpretes(db *sql.DB)  {
@@ -126,7 +127,22 @@ func llenaGrupos(db *sql.DB)  {
 }
 
 func llenaAlbumes(db *sql.DB)  {
-
+  for _, cancion := range Canciones {
+    /*registrado,_ := db.Query("SELECT path FROM albums WHERE path=?",cancion.ruta)
+    if registrado.Next() {
+      continue
+    }*/
+    tabla, _ := db.Prepare("INSERT INTO albums (path, name, year ) VALUES (?, ?, ?)")
+    tabla.Exec(cancion.ruta, cancion.album, cancion.año)
+  }
+  rows,_ := db.Query("SELECT id_album, path, name, year FROM albums")
+  var nombre string
+  var dir string
+  var id, year int
+  for rows.Next() {
+    rows.Scan(&id, &dir, &nombre, &year)
+    fmt.Println(strconv.Itoa(id) + ": " + nombre + " " + dir + strconv.Itoa(year)+ "err")
+  }
 }
 
 func llenaRolas(db *sql.DB)  {
