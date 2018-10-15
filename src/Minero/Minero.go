@@ -8,7 +8,7 @@ import(
   _ "github.com/mattn/go-sqlite3"
   "fmt"
   "strings"
-  "strconv"
+  //"strconv"
   "os/user"
   "log"
 )
@@ -23,6 +23,7 @@ type Cancion struct {
   genero string
   track int
   ruta string
+  carpeta string
 }
 
 var Canciones []Cancion
@@ -40,16 +41,16 @@ func main() {
   llenaBase(base)
 }
 
-func buscaArchivos(directorio string) {
-  archivos, error := ioutil.ReadDir(directorio)
+func buscaArchivos(carpeta string) {
+  archivos, error := ioutil.ReadDir(carpeta)
   if error != nil {
     panic(error)
   }
   for _, archivo := range archivos {
     nombre := archivo.Name()
-    ruta := directorio + "/" + nombre
+    ruta := carpeta + "/" + nombre
     if strings.Contains(nombre, ".mp3") {
-        creaCancion(ruta)
+        creaCancion(ruta,carpeta)
     }
     if archivo.IsDir() {
       buscaArchivos(ruta)
@@ -57,7 +58,7 @@ func buscaArchivos(directorio string) {
   }
 }
 
-func creaCancion(direccion string) {
+func creaCancion(direccion string, directorio string) {
   pista, error := id3v2.Open(direccion, id3v2.Options{Parse: true})
   if error != nil {
     panic(error)
@@ -72,6 +73,7 @@ func creaCancion(direccion string) {
     genero: etiquetas[3],
     track: 0,
     ruta: direccion,
+    carpeta: directorio + "/",
   }
   Canciones = append(Canciones, nuevaCancion)
 }
@@ -109,63 +111,97 @@ func creaBase() *sql.DB {
   return db
 }
 
-func llenaBase(db *sql.DB)  {
+func llenaBase(db *sql.DB) {
+  fmt.Println(" err ")
+  //llenaAlbumes(db)
   llenaRolas(db)
-  llenaAlbumes(db)
-}
-
-func llenaInterpretes(db *sql.DB)  {
-
-}
-
-func llenaPersonas(db *sql.DB)  {
-
-}
-
-func llenaGrupos(db *sql.DB)  {
-
+  //llenaInterpretes(db)
 }
 
 func llenaAlbumes(db *sql.DB)  {
   for _, cancion := range Canciones {
-    /*registrado,_ := db.Query("SELECT path FROM albums WHERE path=?",cancion.ruta)
-    if registrado.Next() {
+    albumRegistrado, err := db.Query("SELECT name FROM albums WHERE name=?",cancion.album)
+    manejaError(err)
+    if albumRegistrado.Next() {
       continue
-    }*/
-    tabla, _ := db.Prepare("INSERT INTO albums (path, name, year ) VALUES (?, ?, ?)")
-    tabla.Exec(cancion.ruta, cancion.album, cancion.año)
+    }
+    albumRegistrado.Close()
+    tabla, err := db.Prepare("INSERT INTO albums (path, name, year ) VALUES (?, ?, ?)")
+    tabla.Exec(cancion.carpeta, cancion.album, cancion.año)
+
   }
+  /*
   rows,_ := db.Query("SELECT id_album, path, name, year FROM albums")
   var nombre string
   var dir string
   var id, year int
   for rows.Next() {
     rows.Scan(&id, &dir, &nombre, &year)
-    fmt.Println(strconv.Itoa(id) + ": " + nombre + " " + dir + strconv.Itoa(year)+ "err")
-  }
+    fmt.Println(strconv.Itoa(id) + ": " + nombre + " " + dir + " " + strconv.Itoa(year) + "err")
+  }*/
 }
 
 func llenaRolas(db *sql.DB)  {
   for _, cancion := range Canciones {
-    registrado,_ := db.Query("SELECT path FROM rolas WHERE path=?",cancion.ruta)
+    registrado, err := db.Query("SELECT path FROM rolas WHERE path=?",cancion.ruta)
+    manejaError(err)
     if registrado.Next() {
       continue
     }
-    tabla, _ := db.Prepare("INSERT INTO rolas (path, title, track, year, genre) VALUES (?, ?, ?, ?, ?)")
-    tabla.Exec(cancion.ruta, cancion.titulo,cancion.track, cancion.año, cancion.genero)
+    registrado.Close()
+    idAlbum := obtenerIdAlbum(db, cancion.album)
+    tabla, _ := db.Prepare("INSERT INTO rolas (path, title, track, year, genre, id_album) VALUES (?, ?, ?, ?, ?, ?)")
+    tabla.Exec(cancion.ruta, cancion.titulo, cancion.track, cancion.año, cancion.genero, idAlbum)
   }
-  /*rows,_ := db.Query("SELECT id_rola, title, path, track, year, genre FROM rolas")
+/*
+  rows,_ := db.Query("SELECT id_rola, title, path, track, year, genre, id_album FROM rolas")
   var titulo string
   var dir string
   var genre string
   var track, year int
-  var id int
+  var id, idAlbum int
   for rows.Next() {
-  rows.Scan(&id, &titulo, &dir, &track, &year, &genre)
-  fmt.Println(strconv.Itoa(id) + ": " + titulo + " " + dir)
+  rows.Scan(&id, &titulo, &dir, &track, &year, &genre, &idAlbum)
+  fmt.Println(strconv.Itoa(id) + ": " + titulo + " " + dir + " " + strconv.Itoa(idAlbum))
   }*/
 }
 
-func ingresaGrupo()  {
+func llenaInterpretes(db *sql.DB) {
+  for _,cancion := range Canciones {
+    interpreteRegistrado, err := db.Query("SELECT name FROM performers WHERE name=?",cancion.interprete)
+    manejaError(err)
+    if interpreteRegistrado.Next() {
+      continue
+    }
+    interpreteRegistrado.Close()
+    tabla, err1 := db.Prepare("INSERT INTO performers (id_type, name) VALUES (?,?)")
+    manejaError(err1)
+    tabla.Exec(1, cancion.interprete)
+  }
+}
 
+func obtenerIdInterprete(db *sql.DB, interpreteRequerido string) int {
+  tabla, err := db.Query("SELECT id_type FROM performers WHERE name=?",interpreteRequerido)
+  manejaError(err)
+  var aux int
+  for tabla.Next() {
+    tabla.Scan(&aux)
+  }
+  tabla.Close()
+  return aux
+}
+
+func obtenerIdAlbum(db *sql.DB, albumRequerido string) int {
+  tabla, err := db.Query("SELECT id_album FROM albums WHERE name =?",albumRequerido)
+  manejaError(err)
+  var aux int
+  tabla.Scan(&aux)
+  tabla.Close()
+  return aux
+}
+
+func manejaError(err error)  {
+  if err != nil {
+    panic(err)
+  }
 }
