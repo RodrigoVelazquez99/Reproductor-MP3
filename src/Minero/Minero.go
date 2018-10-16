@@ -6,9 +6,7 @@ import(
   "github.com/RodrigoVelazquez99/Reproductor-MP3/src/Etiquetas"
   "database/sql"
   _ "github.com/mattn/go-sqlite3"
-  "fmt"
   "strings"
-  //"strconv"
   "os/user"
   "log"
 )
@@ -33,7 +31,6 @@ func main() {
     if err != nil {
         log.Fatal( err )
     }
-  //fmt.Println( direccion.HomeDir )
   Canciones = make([]Cancion, 0)
   buscaArchivos(direccion.HomeDir + "/Music")
   base := creaBase()
@@ -79,112 +76,120 @@ func creaCancion(direccion string, directorio string) {
 }
 
 func creaBase() *sql.DB {
-  db,_ := sql.Open("sqlite3", "../Base/base.db")
+  db,err := sql.Open("sqlite3", "../Base/base.db")
+  manejaError(err)
   TYPES_TABLE := "CREATE TABLE IF NOT EXISTS types (id_type INTEGER PRIMARY KEY, description TEXT)"
-  typesTable,_ := db.Prepare(TYPES_TABLE)
+  typesTable,err1 := db.Prepare(TYPES_TABLE)
+  manejaError(err1)
   typesTable.Exec()
-  i,_ := db.Query("SELECT description FROM types WHERE description=?","Person")
+  i,err2 := db.Query("SELECT description FROM types WHERE description=?","Person")
+  manejaError(err2)
   if !i.Next() {
     tipos,_ := db.Prepare("INSERT INTO types (description) VALUES (?)")
     tipos.Exec("Person")
     tipos.Exec("Group")
     tipos.Exec("Unknown")
   }
+  i.Close()
   PERFORMERS_TABLE := "CREATE TABLE IF NOT EXISTS performers (id_performer INTEGER PRIMARY KEY, id_type INTEGER, name TEXT, FOREIGN KEY (id_type) REFERENCES types(id_type))"
-  performersTable, _ := db.Prepare(PERFORMERS_TABLE)
+  performersTable, err3 := db.Prepare(PERFORMERS_TABLE)
+  manejaError(err3)
   performersTable.Exec()
   PERSONS_TABLE := "CREATE TABLE IF NOT EXISTS persons (id_person INTEGER PRIMARY KEY, stage_name TEXT, real_name TEXT, birth_date TEXT, death_date TEXT)"
-  personsTable, _ := db.Prepare(PERSONS_TABLE)
+  personsTable, err4 := db.Prepare(PERSONS_TABLE)
+  manejaError(err4)
   personsTable.Exec()
   GROUPS_TABLE := "CREATE TABLE IF NOT EXISTS groups (id_group INTEGER PRIMARY KEY, name TEXT, start_date TEXT, end_date TEXT)"
-  groupsTable,_ := db.Prepare(GROUPS_TABLE)
+  groupsTable,err5 := db.Prepare(GROUPS_TABLE)
+  manejaError(err5)
   groupsTable.Exec()
   ALBUMS_TABLE := "CREATE TABLE IF NOT EXISTS albums (id_album INTEGER PRIMARY KEY, path TEXT, name TEXT, year INTEGER)"
-  albumsTable,_ :=  db.Prepare(ALBUMS_TABLE)
+  albumsTable, err6 :=  db.Prepare(ALBUMS_TABLE)
+  manejaError(err6)
   albumsTable.Exec()
   ROLAS_TABLE := "CREATE TABLE IF NOT EXISTS rolas (id_rola INTEGER PRIMARY KEY, id_performer INTEGER, id_album INTEGER, path TEXT, title TEXT, track INTEGER, year INTEGER, genre TEXT, FOREIGN KEY (id_performer) REFERENCES performers(id_performer), FOREIGN KEY (id_album) REFERENCES albums(id_album))"
-  rolasTable,_ := db.Prepare(ROLAS_TABLE)
+  rolasTable, err7 := db.Prepare(ROLAS_TABLE)
+  manejaError(err7)
   rolasTable.Exec()
   IN_GROUP_TABLE := "CREATE TABLE IF NOT EXISTS in_group (id_person INTEGER, id_group INTEGER, PRIMARY KEY (id_person, id_group), FOREIGN KEY (id_person) REFERENCES persons(id_person), FOREIGN KEY (id_group) REFERENCES groups(id_group))"
-  inGroupTable,_ := db.Prepare(IN_GROUP_TABLE)
+  inGroupTable,err8 := db.Prepare(IN_GROUP_TABLE)
+  manejaError(err8)
   inGroupTable.Exec()
   return db
 }
 
-func llenaBase(db *sql.DB) {
-  fmt.Println(" err ")
-  //llenaAlbumes(db)
-  llenaRolas(db)
-  //llenaInterpretes(db)
-}
-
-func llenaAlbumes(db *sql.DB)  {
+func llenaBase(db *sql.DB)  {
   for _, cancion := range Canciones {
-    albumRegistrado, err := db.Query("SELECT name FROM albums WHERE name=?",cancion.album)
-    manejaError(err)
-    if albumRegistrado.Next() {
+    rolaRegistrada, albumRegistrado, interpreteRegistrado := registrado(cancion.ruta, cancion.album, cancion.interprete, db)
+    if rolaRegistrada {
       continue
+    } else {
+      if !albumRegistrado {
+        registraAlbum(cancion.carpeta, cancion.album, cancion.año, db)
+      }
+      if !interpreteRegistrado {
+        registraInterprete(db, cancion.interprete, "Unknown")
+      }
+      idAlbum := obtenerIdAlbum(db, cancion.album)
+      idInterprete := obtenerIdInterprete(db, cancion.interprete)
+      registraRola(cancion.ruta, cancion.titulo, cancion.track, cancion.año, cancion.genero, idAlbum, idInterprete, db)
     }
-    albumRegistrado.Close()
-    tabla, err := db.Prepare("INSERT INTO albums (path, name, year ) VALUES (?, ?, ?)")
-    tabla.Exec(cancion.carpeta, cancion.album, cancion.año)
-
   }
-  /*
-  rows,_ := db.Query("SELECT id_album, path, name, year FROM albums")
-  var nombre string
-  var dir string
-  var id, year int
-  for rows.Next() {
-    rows.Scan(&id, &dir, &nombre, &year)
-    fmt.Println(strconv.Itoa(id) + ": " + nombre + " " + dir + " " + strconv.Itoa(year) + "err")
-  }*/
 }
 
-func llenaRolas(db *sql.DB)  {
-  for _, cancion := range Canciones {
-    registrado, err := db.Query("SELECT path FROM rolas WHERE path=?",cancion.ruta)
-    manejaError(err)
-    if registrado.Next() {
-      continue
-    }
-    registrado.Close()
-    idAlbum := obtenerIdAlbum(db, cancion.album)
-    tabla, _ := db.Prepare("INSERT INTO rolas (path, title, track, year, genre, id_album) VALUES (?, ?, ?, ?, ?, ?)")
-    tabla.Exec(cancion.ruta, cancion.titulo, cancion.track, cancion.año, cancion.genero, idAlbum)
+func registrado(ruta string, album string, interprete string, db *sql.DB) (bool,bool,bool) {
+  rolaRegistrada := false
+  albumRegistrado := false
+  interpreteRegistrado := false
+  registrada,err := db.Query("SELECT path FROM rolas WHERE path=?",ruta)
+  manejaError(err)
+  if registrada.Next() {
+    registrada.Close()
+    return true, true, true
   }
-/*
-  rows,_ := db.Query("SELECT id_rola, title, path, track, year, genre, id_album FROM rolas")
-  var titulo string
-  var dir string
-  var genre string
-  var track, year int
-  var id, idAlbum int
-  for rows.Next() {
-  rows.Scan(&id, &titulo, &dir, &track, &year, &genre, &idAlbum)
-  fmt.Println(strconv.Itoa(id) + ": " + titulo + " " + dir + " " + strconv.Itoa(idAlbum))
-  }*/
+  registrada1, err1 := db.Query("SELECT name FROM albums WHERE name=?",album)
+  manejaError(err1)
+  if registrada1.Next() {
+    albumRegistrado = true
+  }
+  registrada2, err2 := db.Query("SELECT name FROM performers WHERE name=?",interprete)
+  manejaError(err2)
+  if registrada2.Next() {
+    interpreteRegistrado = true
+  }
+  registrada.Close()
+  registrada1.Close()
+  registrada2.Close()
+  return rolaRegistrada, albumRegistrado, interpreteRegistrado
 }
 
-func llenaInterpretes(db *sql.DB) {
-  for _,cancion := range Canciones {
-    interpreteRegistrado, err := db.Query("SELECT name FROM performers WHERE name=?",cancion.interprete)
-    manejaError(err)
-    if interpreteRegistrado.Next() {
-      continue
-    }
-    interpreteRegistrado.Close()
-    tabla, err1 := db.Prepare("INSERT INTO performers (id_type, name) VALUES (?,?)")
-    manejaError(err1)
-    tabla.Exec(1, cancion.interprete)
-  }
+func registraInterprete(db *sql.DB, interprete string, descripcion string)  {
+  idType := obtenerIdType(descripcion)
+  tabla, err := db.Prepare("INSERT INTO performers (id_type, name) VALUES (?, ?)")
+  manejaError(err)
+  tabla.Exec(idType, interprete)
+  tabla.Close()
+}
+
+func registraAlbum(carpeta string, album string, año int, db *sql.DB)  {
+  tabla, err := db.Prepare("INSERT INTO albums (path, name, year ) VALUES (?, ?, ?)")
+  manejaError(err)
+  tabla.Exec(carpeta, album,año)
+  tabla.Close()
+}
+
+func registraRola(ruta string, titulo string, track int, año int, genero string, idAlbum int, idPerformer int, db *sql.DB)   {
+  tabla1, err := db.Prepare("INSERT INTO rolas (path, title, track, year, genre, id_album, id_performer) VALUES (?, ?, ?, ?, ?, ?, ?)")
+  manejaError(err)
+  tabla1.Exec(ruta,titulo, track, año, genero, idAlbum, idPerformer)
+  tabla1.Close()
 }
 
 func obtenerIdInterprete(db *sql.DB, interpreteRequerido string) int {
-  tabla, err := db.Query("SELECT id_type FROM performers WHERE name=?",interpreteRequerido)
+  tabla, err := db.Query("SELECT id_performer FROM performers WHERE name=?",interpreteRequerido)
   manejaError(err)
   var aux int
-  for tabla.Next() {
+  if tabla.Next() {
     tabla.Scan(&aux)
   }
   tabla.Close()
@@ -195,9 +200,22 @@ func obtenerIdAlbum(db *sql.DB, albumRequerido string) int {
   tabla, err := db.Query("SELECT id_album FROM albums WHERE name =?",albumRequerido)
   manejaError(err)
   var aux int
-  tabla.Scan(&aux)
+  if tabla.Next() {
+    tabla.Scan(&aux)
+  }
   tabla.Close()
   return aux
+}
+
+func obtenerIdType(descripcion string) int {
+  switch descripcion {
+  case "Person":
+    return 0
+  case "Group":
+    return 1
+  default:
+    return 2
+  }
 }
 
 func manejaError(err error)  {
