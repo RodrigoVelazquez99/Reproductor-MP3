@@ -6,6 +6,8 @@ import(
    _ "github.com/mattn/go-sqlite3"
 )
 
+var columnas []Columna
+
 type Columna struct {
   titulo string
   interprete string
@@ -14,9 +16,9 @@ type Columna struct {
   ruta string
 }
 
-
 func main()  {
   base := IniciaBase()
+  columnas = make([]Columna, 0)
   BuscaCancion(base, "s")
 }
 
@@ -28,30 +30,64 @@ func IniciaBase() *sql.DB {
   return nuevaBase
 }
 
-func BuscaCancion(db *sql.DB, solicitud string) []Columna {
-  columnas:= make([]Columna, 0)
-  rows, err := db.Query("SELECT path, title, genre, id_performer, id_album FROM rolas WHERE title LIKE '%" + solicitud + "%'")
+func BuscaCancion(db *sql.DB, solicitud string) {
+  buscaPorTitulo(db, solicitud)
+  buscaPorInterprete(db, solicitud)
+  buscaPorAlbum(db,solicitud)
+  buscaPorGenero(db, solicitud)
+}
+
+func creaColumna(title string, performer string, albums string, genre string, path string )  {
+  nuevaColumna := Columna{
+    titulo: title,
+    interprete: performer,
+    album: albums,
+    genero: genre,
+    ruta: path,
+  }
+  columnas = append(columnas, nuevaColumna)
+  fmt.Println(nuevaColumna)
+}
+
+func buscaPorTitulo(db *sql.DB, solicitud string){
+  tabla, err := db.Query("SELECT path, title, genre, id_performer, id_album FROM rolas WHERE title LIKE '%" + solicitud + "%'")
   if err != nil {
     panic(err)
   }
   var title, genre, path string
   var idAlbum, idPerformer int
-  for rows.Next() {
-    rows.Scan(&path, &title, &genre, &idPerformer ,&idAlbum)
+  for tabla.Next() {
+    tabla.Scan(&path, &title, &genre, &idPerformer ,&idAlbum)
     performer := buscaInterprete(idPerformer,db )
     Album := buscaAlbum(idAlbum,db )
-    nuevaColumna := Columna{
-      titulo: title,
-      interprete: performer,
-      album: Album,
-      genero: genre,
-      ruta: path,
-    }
-    columnas = append(columnas, nuevaColumna)
+    creaColumna(title, performer, Album, genre, path)
   }
-  rows.Close()
-  fmt.Println(columnas)
-  return columnas
+  tabla.Close()
+}
+func buscaPorAlbum(db *sql.DB, solicitud string){
+  tabla, err := db.Query("SELECT path, name FROM albums WHERE name LIKE '%" + solicitud + "%'")
+  if err != nil {
+    panic(err)
+  }
+  var title, genre, path string
+  var idAlbum, idPerformer int
+  for tabla.Next() {
+    tabla.Scan(&path, &title, &genre, &idPerformer ,&idAlbum)
+    performer := buscaInterprete(idPerformer,db )
+    Album := buscaAlbum(idAlbum,db )
+    creaColumna(title, performer, Album, genre, path)
+  }
+  tabla.Close()
+}
+
+func buscaPorGenero(db *sql.DB, solicitud string) {
+
+}
+func buscaPorInterprete(db *sql.DB, solicitud string){
+
+}
+func buscaColumna(columna Columna){
+
 }
 
 func buscaInterprete(id int, db *sql.DB) string {
