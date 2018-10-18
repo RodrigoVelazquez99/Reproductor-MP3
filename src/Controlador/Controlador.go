@@ -2,6 +2,8 @@ package main
 
 import(
   "github.com/gotk3/gotk3/gtk"
+  "errors"
+  //"fmt"
 )
 
 const path = "../Interfaz/interfaz.glade"
@@ -17,9 +19,13 @@ func main()  {
   if err != nil {
     panic(err)
   }
-
+  boton, err := button(builder)
+  if err != nil {
+    panic(err)
+  }
+  boton.Clicked()
   ventana.SetTitle("Reproductor-MP3")
-	ventana.SetDefaultSize(500, 500)
+	ventana.SetDefaultSize(800, 00)
 	ventana.Connect("destroy", func ()  {
     gtk.MainQuit()
   })
@@ -29,46 +35,44 @@ func main()  {
 }
 
 func build(ruta string) (*gtk.Builder, error)  {
-
   	builder, err := gtk.BuilderNew()
   	if err != nil {
   		return nil, err
   	}
-
   	if ruta != "" {
   		err = builder.AddFromFile(ruta)
   		if err != nil {
-  			return nil, error
+  			return nil, errors.New("Error")
   		}
   	}
-
   	return builder, nil
 }
 
 
 func window(builder *gtk.Builder) (*gtk.Window ,error) {
-
-  object, err := b.GetObject("window1")
+  object, err := builder.GetObject("window1")
 	if err != nil {
 		return nil, err
 	}
-
 	ventana, ok := object.(*gtk.Window)
 	if !ok {
 		return nil, err
 	}
-
 	return ventana, nil
 }
 
-func grid()  {
-
+func button(builder *gtk.Builder) (*gtk.Button, error)  {
+  object, err := builder.GetObject("button1")
+  if err != nil {
+    panic(err)
+  }
+  boton, ok := object.(*gtk.Button)
+  if !ok {
+    return nil, err
+  }
+  return boton, nil
 }
 
-func button()  {
-
-}
-
-func statusBar()  {
+func entry()  {
 
 }

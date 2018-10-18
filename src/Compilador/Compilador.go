@@ -5,24 +5,33 @@ import (
   "errors"
 )
 
-func obtenerCoincidencia(palabra string, clave string) (string){
-  cadena := ""
-  j := 0
-  for j < len(palabra) {
-    if string(palabra[j]) == clave && j + 1 < len(palabra) {
-      if string(palabra[j+1]) == ":" {
-        for k := j+2; k < len(palabra); k++ {
-          if string(palabra[k]) == "," {
-            break
+func obtenerCoincidencia(palabras []string, clave string) string {
+  	for i:= 0 ; i < len(palabras) ; i++{
+  		if palabras[i] != clave && !strings.Contains(palabras[i],clave) {
+  	        	continue
+  		}
+  		if palabras[i] == clave {
+  			if i + 1 < len(palabras){
+          if strings.HasSuffix(palabras[i+1],",") {
+            s := palabras[i+1]
+            s = s[:len(palabras[i+1])-1]
+            return s
           }
-          cadena += string(palabra[k])
+  			return palabras[i+1]
+  			}
+  		}
+  		if strings.Contains(palabras[i],clave){
+  			palabra := palabras[i]
+  			arr := palabra[2:]
+        if strings.HasSuffix(arr,",") {
+          arr = arr[:len(arr)-1]
         }
-      }
-    }
-    j++
+  			return arr
+  		}
+  	}
+  	return "Ingresa bien la busqueda"
   }
-  return cadena
-}
+
 func BuscaCoincidencias(entrada string) ([]string, []string, error) {
   var titulo, interprete, album bool
   var coincidenciaTitulo, coincidenciaAlbum, coincidenciaInterprete string
@@ -31,14 +40,14 @@ func BuscaCoincidencias(entrada string) ([]string, []string, error) {
   }
   palabras := strings.Fields(entrada)
   for i := 0 ; i < len(palabras) ; i++ {
-    if strings.Contains(palabras[i], "T:") {
-      coincidenciaTitulo = obtenerCoincidencia(palabras[i], "T")
+    if !titulo && strings.Contains(palabras[i], "T:") {
+      coincidenciaTitulo = obtenerCoincidencia(palabras, "T:")
       titulo = true
-    } else if strings.Contains(palabras[i], "P:") {
-      coincidenciaInterprete = obtenerCoincidencia(palabras[i], "P")
+    } else if !interprete && strings.Contains(palabras[i], "P:") {
+      coincidenciaInterprete = obtenerCoincidencia(palabras, "P:")
       interprete = true
-    } else if strings.Contains(palabras[i], "A:") {
-      coincidenciaAlbum = obtenerCoincidencia(palabras[i], "A")
+    } else if !album && strings.Contains(palabras[i], "A:") {
+      coincidenciaAlbum = obtenerCoincidencia(palabras, "A:")
       album = true
     }
   }

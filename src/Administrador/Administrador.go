@@ -21,7 +21,7 @@ type Columna struct {
 }
 
 func main()  {
-  entrada := "T:Touch, A:Unknown"
+  entrada := "T: Touch, A: Random Access Memories P: Daft, Punk"
   base := IniciaBase()
   columnas = make([]Columna, 0)
   solicitudes, coincidencias, err := Compilador.BuscaCoincidencias(entrada)
