@@ -1,14 +1,12 @@
 package Buscador
 
 import(
-  "errors"
   "database/sql"
   _ "github.com/mattn/go-sqlite3"
-  "strings"
 )
 
 
-func obtenerIdAlbum(db *sql.DB, album string) int {
+func ObtenerIdAlbum(db *sql.DB, album string) int {
   tabla, err := db.Query("SELECT id_album FROM albums WHERE name =?",album)
   if err != nil { panic(err) }
   var id int
@@ -19,7 +17,7 @@ func obtenerIdAlbum(db *sql.DB, album string) int {
   return id
 }
 
-func obtenerIdInterprete(db *sql.DB, interprete string) int {
+func ObtenerIdInterprete(db *sql.DB, interprete string) int {
   tabla, err := db.Query("SELECT id_performer FROM performers WHERE name =?",interprete)
   if err != nil { panic(err) }
   var id int
@@ -30,7 +28,7 @@ func obtenerIdInterprete(db *sql.DB, interprete string) int {
   return id
 }
 
-func buscaAlbums(db *sql.DB, coincidencia string) []string {
+func BuscaAlbums(db *sql.DB, coincidencia string) []string {
   tabla, err := db.Query("SELECT name FROM albums WHERE name LIKE '%" + coincidencia + "%'")
   albums := make([]string, 0)
   if err != nil { panic(err) }
@@ -43,7 +41,7 @@ func buscaAlbums(db *sql.DB, coincidencia string) []string {
   return albums
 }
 
-func buscaInterpretes(db *sql.DB, coincidencia string) []string {
+func BuscaInterpretes(db *sql.DB, coincidencia string) []string {
   tabla, err := db.Query("SELECT name FROM performers WHERE name LIKE '%" + coincidencia + "%'")
   interpretes := make([]string, 0)
   if err != nil { panic(err) }
@@ -56,7 +54,7 @@ func buscaInterpretes(db *sql.DB, coincidencia string) []string {
   return interpretes
 }
 
-func buscaInterprete(id int, db *sql.DB) string {
+func BuscaInterprete(id int, db *sql.DB) string {
   tabla,err := db.Query("SELECT name FROM performers WHERE id_performer=?",id)
   if err != nil {
     panic(err)
@@ -69,7 +67,7 @@ func buscaInterprete(id int, db *sql.DB) string {
   return interprete
 }
 
-func buscaAlbum(id int, db *sql.DB) string {
+func BuscaAlbum(id int, db *sql.DB) string {
   tabla,err := db.Query("SELECT name FROM albums WHERE id_album=?",id)
   if err != nil {
     panic(err)

@@ -5,6 +5,8 @@ import(
    "fmt"
    "database/sql"
    _ "github.com/mattn/go-sqlite3"
+   "github.com/RodrigoVelazquez99/Reproductor-MP3/src/Buscador"
+   "github.com/RodrigoVelazquez99/Reproductor-MP3/src/Compilador"
    "strings"
 )
 
@@ -19,12 +21,13 @@ type Columna struct {
 }
 
 func main()  {
+  entrada := "T:Touch, A:Unknown"
   base := IniciaBase()
   columnas = make([]Columna, 0)
-  //solicitudes, coincidencias, err1 := buscaCoincidencias(entrada)
-  //if err1 != nil { }
-  err := buscaCancion(base, "oa", "INTERPRETE")
+  solicitudes, coincidencias, err := Compilador.BuscaCoincidencias(entrada)
   if err != nil { panic(err) }
+  err1 := buscaCancion(base, solicitudes, coincidencias)
+  if err1 != nil { panic(err1) }
 }
 
 func IniciaBase() *sql.DB {
@@ -68,8 +71,8 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
     var idAlbum, idPerformer int
     for tabla.Next() {
       tabla.Scan(&idAlbum, &idPerformer, &path, &title, &genre)
-      performer := buscaInterprete(idPerformer, db)
-      Album := buscaAlbum(idAlbum, db)
+      performer := Buscador.BuscaInterprete(idPerformer, db)
+      Album := Buscador.BuscaAlbum(idAlbum, db)
       if strings.Contains(performer, string(coincidencias[1])) && strings.Contains(Album, string(coincidencias[2])) {
         creaColumna(title, performer, Album, genre, path)
       }
@@ -83,8 +86,8 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
     var idAlbum, idPerformer int
     for tabla.Next() {
       tabla.Scan(&idAlbum, &idPerformer, &path, &title, &genre)
-      performer := buscaInterprete(idPerformer, db)
-      Album := buscaAlbum(idAlbum, db)
+      performer := Buscador.BuscaInterprete(idPerformer, db)
+      Album := Buscador.BuscaAlbum(idAlbum, db)
       if strings.Contains(Album, string(coincidencias[1])) {
         creaColumna(title, performer, Album, genre, path)
       }
@@ -98,8 +101,8 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
     var idAlbum, idPerformer int
     for tabla.Next() {
       tabla.Scan(&idAlbum, &idPerformer, &path, &title, &genre)
-      performer := buscaInterprete(idPerformer, db)
-      Album := buscaAlbum(idAlbum, db)
+      performer := Buscador.BuscaInterprete(idPerformer, db)
+      Album := Buscador.BuscaAlbum(idAlbum, db)
       if strings.Contains(performer, string(coincidencias[1])) {
         creaColumna(title, performer, Album, genre, path)
       }
@@ -107,52 +110,51 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
     tabla.Close()
     return nil
   } else if banderaAlbum && banderaPerformer {
-    albums := buscaAlbums(db, strings(coincidencias[1]))
+    albums := Buscador.BuscaAlbums(db, string(coincidencias[1]))
     for _,album := range albums {
-      idAlbum := obtenerIdAlbum(db, album)
+      idAlbum := Buscador.ObtenerIdAlbum(db, album)
       tabla, err := db.Query("SELECT id_performer, path, title, genre FROM rolas WHERE id_album=?",idAlbum)
       if err != nil { panic(err)}
       var title, genre, path string
       var idPerformer int
       for tabla.Next() {
         tabla.Scan(&idPerformer, &path, &title, &genre)
-        performer := buscaInterprete(idPerformer, db)
-        if strins.Contains(performer, coincidencias[0]){
+        performer := Buscador.BuscaInterprete(idPerformer, db)
+        if strings.Contains(performer, coincidencias[0]){
           creaColumna(title, performer, album, genre, path)
         }
       }
-
       tabla.Close()
     }
     return nil
   } else if banderaAlbum {
-    albums := buscaAlbums(db, coincidencias[0])
+    albums := Buscador.BuscaAlbums(db, coincidencias[0])
     for _,album := range albums {
-      idAlbum := obtenerIdAlbum(db, album)
+      idAlbum := Buscador.ObtenerIdAlbum(db, album)
       tabla, err := db.Query("SELECT id_performer, path, title, genre FROM rolas WHERE id_album=?",idAlbum)
       if err != nil { panic(err)}
       var title, genre, path string
       var idPerformer int
       for tabla.Next() {
         tabla.Scan(&idPerformer, &path, &title, &genre)
-        performer := buscaInterprete(idPerformer, db)
+        performer := Buscador.BuscaInterprete(idPerformer, db)
         creaColumna(title, performer, album, genre, path)
       }
       tabla.Close()
     }
     return nil
   } else if banderaPerformer {
-    interpretes := buscaInterpretes(db, coincidencias[0])
+    interpretes := Buscador.BuscaInterpretes(db, coincidencias[0])
     for _, interprete := range interpretes {
-      idInterprete := obtenerIdInterprete(interprete)
+      idInterprete := Buscador.ObtenerIdInterprete(db, interprete)
       tabla, err := db.Query("SELECT id_album, path, title, genre FROM rolas WHERE id_performer=?",idInterprete)
       if err != nil { panic(err) }
       var title, genre, path string
       var idAlbum int
       for tabla.Next() {
         tabla.Scan(&idAlbum, &path, &title, &genre)
-        performer := buscaInterprete(idInterprete, db)
-        album := buscaAlbum(idAlbum, db)
+        performer := Buscador.BuscaInterprete(idInterprete, db)
+        album := Buscador.BuscaAlbum(idAlbum, db)
         creaColumna(title, performer, album, genre, path)
       }
       tabla.Close()
@@ -165,12 +167,13 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
     var idAlbum, idPerformer int
     for tabla.Next() {
       tabla.Scan(&idAlbum, &idPerformer, &path, &title, &genre)
-      performer := buscaInterprete(idPerformer, db)
-      Album := buscaAlbum(idAlbum, db)
+      performer := Buscador.BuscaInterprete(idPerformer, db)
+      Album := Buscador.BuscaAlbum(idAlbum, db)
       creaColumna(title, performer, Album, genre, path)
     }
     tabla.Close()
     return nil
+  } else {
+    return errors.New("fallo")
   }
-  return errors.New("fallo")
 }

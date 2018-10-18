@@ -5,7 +5,7 @@ import (
   "errors"
 )
 
-func ObtenerCoincidencia(palabra string, clave string) string {
+func obtenerCoincidencia(palabra string, clave string) (string){
   cadena := ""
   j := 0
   for j < len(palabra) {
@@ -21,25 +21,25 @@ func ObtenerCoincidencia(palabra string, clave string) string {
     }
     j++
   }
-  if cadena == "" { return "", errors.New("Sin cadena") }
-  return cadena, nil
+  return cadena
 }
-func buscaCoincidencias(entrada string) ([]string, []string, error) {
+func BuscaCoincidencias(entrada string) ([]string, []string, error) {
   var titulo, interprete, album bool
-  if !strings.Contains(entrada, "T:") || !strings.Contains(entrada, "A:") || !strings.Contains(entrada, "P:") {
-    return "","", errors.New("Entrada no valida")
+  var coincidenciaTitulo, coincidenciaAlbum, coincidenciaInterprete string
+  if !strings.Contains(entrada, "T:") && !strings.Contains(entrada, "A:") && !strings.Contains(entrada, "P:") {
+    return nil,nil, errors.New("Entrada no valida:  " + entrada)
   }
   palabras := strings.Fields(entrada)
-  for int i := 0 ; i < len(palabras) ; i++ {
+  for i := 0 ; i < len(palabras) ; i++ {
     if strings.Contains(palabras[i], "T:") {
-      coincidenciaTitulo, err := obtenerCoincidencia(palabras[i], "T")
-      if err != nil { titulo = true }
+      coincidenciaTitulo = obtenerCoincidencia(palabras[i], "T")
+      titulo = true
     } else if strings.Contains(palabras[i], "P:") {
-      coincidenciaInterprete, err:= obtenerCoincidencia(palabras[i], "P")
-      if err != nil { interprete = true }
+      coincidenciaInterprete = obtenerCoincidencia(palabras[i], "P")
+      interprete = true
     } else if strings.Contains(palabras[i], "A:") {
-      coincidenciaAlbum, err := obtenerCoincidencia(palabras[i], "A")
-      if err != nil { album = true }
+      coincidenciaAlbum = obtenerCoincidencia(palabras[i], "A")
+      album = true
     }
   }
   banderas := make([]string, 0)
