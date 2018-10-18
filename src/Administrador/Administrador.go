@@ -10,20 +10,12 @@ import(
    "strings"
 )
 
-var columnas []Columna
-
-type Columna struct {
-  titulo string
-  interprete string
-  album string
-  genero string
-  ruta string
-}
+var renglones []string
 
 func main()  {
   entrada := "T: Touch, A: Random Access Memories P: Daft, Punk"
   base := IniciaBase()
-  columnas = make([]Columna, 0)
+  renglones = make([]string, 0)
   solicitudes, coincidencias, err := Compilador.BuscaCoincidencias(entrada)
   if err != nil { panic(err) }
   err1 := buscaCancion(base, solicitudes, coincidencias)
@@ -36,16 +28,13 @@ func IniciaBase() *sql.DB {
   return nuevaBase
 }
 
-func creaColumna(title string, performer string, albums string, genre string, path string )  {
-  nuevaColumna := Columna{
-    titulo: title,
-    interprete: performer,
-    album: albums,
-    genero: genre,
-    ruta: path,
-  }
-  columnas = append(columnas, nuevaColumna)
-  fmt.Println(title + " " + performer + " " + albums + " " + genre)
+func ObtenerRenglones() []string {
+  return renglones
+}
+
+func creaRenglon(titulo string, interprete string, album string, genero string, ruta string )  {
+  renglones = append(renglones, titulo, interprete, album, genero, ruta)
+  fmt.Println(titulo + " " + interprete + " " + album + " " + genero)
 }
 
 func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
@@ -74,7 +63,7 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
       performer := Buscador.BuscaInterprete(idPerformer, db)
       Album := Buscador.BuscaAlbum(idAlbum, db)
       if strings.Contains(performer, string(coincidencias[1])) && strings.Contains(Album, string(coincidencias[2])) {
-        creaColumna(title, performer, Album, genre, path)
+        creaRenglon(title, performer, Album, genre, path)
       }
     }
     tabla.Close()
@@ -89,7 +78,7 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
       performer := Buscador.BuscaInterprete(idPerformer, db)
       Album := Buscador.BuscaAlbum(idAlbum, db)
       if strings.Contains(Album, string(coincidencias[1])) {
-        creaColumna(title, performer, Album, genre, path)
+        creaRenglon(title, performer, Album, genre, path)
       }
     }
     tabla.Close()
@@ -104,7 +93,7 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
       performer := Buscador.BuscaInterprete(idPerformer, db)
       Album := Buscador.BuscaAlbum(idAlbum, db)
       if strings.Contains(performer, string(coincidencias[1])) {
-        creaColumna(title, performer, Album, genre, path)
+        creaRenglon(title, performer, Album, genre, path)
       }
     }
     tabla.Close()
@@ -121,7 +110,7 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
         tabla.Scan(&idPerformer, &path, &title, &genre)
         performer := Buscador.BuscaInterprete(idPerformer, db)
         if strings.Contains(performer, coincidencias[0]){
-          creaColumna(title, performer, album, genre, path)
+          creaRenglon(title, performer, album, genre, path)
         }
       }
       tabla.Close()
@@ -138,7 +127,7 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
       for tabla.Next() {
         tabla.Scan(&idPerformer, &path, &title, &genre)
         performer := Buscador.BuscaInterprete(idPerformer, db)
-        creaColumna(title, performer, album, genre, path)
+        creaRenglon(title, performer, album, genre, path)
       }
       tabla.Close()
     }
@@ -155,7 +144,7 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
         tabla.Scan(&idAlbum, &path, &title, &genre)
         performer := Buscador.BuscaInterprete(idInterprete, db)
         album := Buscador.BuscaAlbum(idAlbum, db)
-        creaColumna(title, performer, album, genre, path)
+        creaRenglon(title, performer, album, genre, path)
       }
       tabla.Close()
     }
@@ -169,7 +158,7 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
       tabla.Scan(&idAlbum, &idPerformer, &path, &title, &genre)
       performer := Buscador.BuscaInterprete(idPerformer, db)
       Album := Buscador.BuscaAlbum(idAlbum, db)
-      creaColumna(title, performer, Album, genre, path)
+      creaRenglon(title, performer, Album, genre, path)
     }
     tabla.Close()
     return nil
