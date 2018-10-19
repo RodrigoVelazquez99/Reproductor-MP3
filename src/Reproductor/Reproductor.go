@@ -28,6 +28,10 @@ func main()  {
   if err != nil {
     panic(err)
   }
+  ventana2, err := scrolledWindow(builder)
+  if err != nil {
+    panic(err)
+  }
   boton, err := button(builder, "button1")
   if err != nil {
     panic(err)
@@ -70,15 +74,17 @@ func main()  {
         }
       }
   })
+  ventana2.Add(treeView)
+  ventana2.ShowAll()
   ventana.SetTitle("Reproductor-MP3")
 	ventana.SetDefaultSize(800, 500)
 	ventana.Connect("destroy", func ()  {
     gtk.MainQuit()
   })
-  grid.Add(treeView)
 	ventana.ShowAll()
 	gtk.Main()
 }
+
 
 func build(ruta string) (*gtk.Builder, error)  {
   	builder, err := gtk.BuilderNew()
@@ -101,6 +107,18 @@ func window(builder *gtk.Builder) (*gtk.Window ,error) {
 		return nil, err
 	}
 	ventana, ok := object.(*gtk.Window)
+	if !ok {
+		return nil, err
+	}
+	return ventana, nil
+}
+
+func scrolledWindow(builder *gtk.Builder) (*gtk.ScrolledWindow, error) {
+  object, err := builder.GetObject("window2")
+	if err != nil {
+		return nil, err
+	}
+	ventana, ok := object.(*gtk.ScrolledWindow)
 	if !ok {
 		return nil, err
 	}
