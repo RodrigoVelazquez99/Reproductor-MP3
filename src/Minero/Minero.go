@@ -1,4 +1,4 @@
-package main
+package Minero
 
 import(
   "io/ioutil"
@@ -26,7 +26,7 @@ type Cancion struct {
 
 var Canciones []Cancion
 
-func main() {
+func Mina() {
   direccion, err := user.Current()
     if err != nil {
         log.Fatal( err )

@@ -1,8 +1,7 @@
-package main
+package Administrador
 
 import(
   "errors"
-   "fmt"
    "database/sql"
    _ "github.com/mattn/go-sqlite3"
    "github.com/RodrigoVelazquez99/Reproductor-MP3/src/Buscador"
@@ -11,33 +10,53 @@ import(
 )
 
 var renglones []string
+var base *sql.DB
 
-func main()  {
-  entrada := "T: Touch, A: Random Access Memories P: Daft, Punk"
-  base := IniciaBase()
-  renglones = make([]string, 0)
+func LeeEntrada(entrada string) bool {
   solicitudes, coincidencias, err := Compilador.BuscaCoincidencias(entrada)
-  if err != nil { panic(err) }
-  err1 := buscaCancion(base, solicitudes, coincidencias)
-  if err1 != nil { panic(err1) }
+  if err != nil { return false }
+  err1 := buscaCancion(solicitudes, coincidencias)
+  if err1 != nil { return false }
+  return true
 }
 
-func IniciaBase() *sql.DB {
+func IniciaBase() {
+  renglones = make([]string, 0)
   nuevaBase, err := sql.Open("sqlite3", "../Base/base.db")
   if err != nil { panic(err) }
-  return nuevaBase
+  base = nuevaBase
 }
 
 func ObtenerRenglones() []string {
   return renglones
 }
 
-func creaRenglon(titulo string, interprete string, album string, genero string, ruta string )  {
-  renglones = append(renglones, titulo, interprete, album, genero, ruta)
-  fmt.Println(titulo + " " + interprete + " " + album + " " + genero)
+func ObtenerBase() ([]string, error) {
+  rolas := make([]string, 0)
+  tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas")
+  if err != nil { return nil, err }
+  var title, genre, path string
+  var idAlbum, idPerformer int
+  for tabla.Next() {
+    tabla.Scan(&idAlbum, &idPerformer, &path, &title, &genre)
+    performer := Buscador.BuscaInterprete(idPerformer, base)
+    Album := Buscador.BuscaAlbum(idAlbum, base)
+    rolas = append(rolas, title, performer, Album, genre)
+  }
+  tabla.Close()
+  return rolas, nil
 }
 
-func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
+func VaciaRenglones()  {
+  nuevosRenglones := make([]string, 0)
+  renglones = nuevosRenglones
+}
+
+func creaRenglon(titulo string, interprete string, album string, genero string, ruta string )  {
+  renglones = append(renglones, titulo, interprete, album, genero)
+}
+
+func buscaCancion(banderas []string, coincidencias []string) error {
   var banderaTitle, banderaPerformer, banderaAlbum bool
   for i := 0; i < len(banderas) ; i++ {
     if string(banderas[i]) == "title" {
@@ -54,14 +73,14 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
     }
   }
   if banderaTitle && banderaAlbum && banderaPerformer {
-    tabla, err := db.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
-    if err != nil { panic(err) }
+    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
+    if err != nil { return err }
     var title, genre, path string
     var idAlbum, idPerformer int
     for tabla.Next() {
       tabla.Scan(&idAlbum, &idPerformer, &path, &title, &genre)
-      performer := Buscador.BuscaInterprete(idPerformer, db)
-      Album := Buscador.BuscaAlbum(idAlbum, db)
+      performer := Buscador.BuscaInterprete(idPerformer, base)
+      Album := Buscador.BuscaAlbum(idAlbum, base)
       if strings.Contains(performer, string(coincidencias[1])) && strings.Contains(Album, string(coincidencias[2])) {
         creaRenglon(title, performer, Album, genre, path)
       }
@@ -69,14 +88,14 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
     tabla.Close()
     return nil
   } else if banderaTitle && banderaAlbum {
-    tabla, err := db.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
-    if err != nil { panic(err) }
+    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
+    if err != nil { return err }
     var title, genre, path string
     var idAlbum, idPerformer int
     for tabla.Next() {
       tabla.Scan(&idAlbum, &idPerformer, &path, &title, &genre)
-      performer := Buscador.BuscaInterprete(idPerformer, db)
-      Album := Buscador.BuscaAlbum(idAlbum, db)
+      performer := Buscador.BuscaInterprete(idPerformer, base)
+      Album := Buscador.BuscaAlbum(idAlbum, base)
       if strings.Contains(Album, string(coincidencias[1])) {
         creaRenglon(title, performer, Album, genre, path)
       }
@@ -84,14 +103,14 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
     tabla.Close()
     return nil
   } else if banderaTitle && banderaPerformer{
-    tabla, err := db.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
-    if err != nil { panic(err) }
+    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
+    if err != nil { return err }
     var title, genre, path string
     var idAlbum, idPerformer int
     for tabla.Next() {
       tabla.Scan(&idAlbum, &idPerformer, &path, &title, &genre)
-      performer := Buscador.BuscaInterprete(idPerformer, db)
-      Album := Buscador.BuscaAlbum(idAlbum, db)
+      performer := Buscador.BuscaInterprete(idPerformer, base)
+      Album := Buscador.BuscaAlbum(idAlbum, base)
       if strings.Contains(performer, string(coincidencias[1])) {
         creaRenglon(title, performer, Album, genre, path)
       }
@@ -99,16 +118,16 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
     tabla.Close()
     return nil
   } else if banderaAlbum && banderaPerformer {
-    albums := Buscador.BuscaAlbums(db, string(coincidencias[1]))
+    albums := Buscador.BuscaAlbums(base, string(coincidencias[1]))
     for _,album := range albums {
-      idAlbum := Buscador.ObtenerIdAlbum(db, album)
-      tabla, err := db.Query("SELECT id_performer, path, title, genre FROM rolas WHERE id_album=?",idAlbum)
-      if err != nil { panic(err)}
+      idAlbum := Buscador.ObtenerIdAlbum(base, album)
+      tabla, err := base.Query("SELECT id_performer, path, title, genre FROM rolas WHERE id_album=?",idAlbum)
+      if err != nil { return err }
       var title, genre, path string
       var idPerformer int
       for tabla.Next() {
         tabla.Scan(&idPerformer, &path, &title, &genre)
-        performer := Buscador.BuscaInterprete(idPerformer, db)
+        performer := Buscador.BuscaInterprete(idPerformer, base)
         if strings.Contains(performer, coincidencias[0]){
           creaRenglon(title, performer, album, genre, path)
         }
@@ -117,47 +136,47 @@ func buscaCancion(db *sql.DB, banderas []string, coincidencias []string) error {
     }
     return nil
   } else if banderaAlbum {
-    albums := Buscador.BuscaAlbums(db, coincidencias[0])
+    albums := Buscador.BuscaAlbums(base, coincidencias[0])
     for _,album := range albums {
-      idAlbum := Buscador.ObtenerIdAlbum(db, album)
-      tabla, err := db.Query("SELECT id_performer, path, title, genre FROM rolas WHERE id_album=?",idAlbum)
-      if err != nil { panic(err)}
+      idAlbum := Buscador.ObtenerIdAlbum(base, album)
+      tabla, err := base.Query("SELECT id_performer, path, title, genre FROM rolas WHERE id_album=?",idAlbum)
+      if err != nil { return err }
       var title, genre, path string
       var idPerformer int
       for tabla.Next() {
         tabla.Scan(&idPerformer, &path, &title, &genre)
-        performer := Buscador.BuscaInterprete(idPerformer, db)
+        performer := Buscador.BuscaInterprete(idPerformer, base)
         creaRenglon(title, performer, album, genre, path)
       }
       tabla.Close()
     }
     return nil
   } else if banderaPerformer {
-    interpretes := Buscador.BuscaInterpretes(db, coincidencias[0])
+    interpretes := Buscador.BuscaInterpretes(base, coincidencias[0])
     for _, interprete := range interpretes {
-      idInterprete := Buscador.ObtenerIdInterprete(db, interprete)
-      tabla, err := db.Query("SELECT id_album, path, title, genre FROM rolas WHERE id_performer=?",idInterprete)
-      if err != nil { panic(err) }
+      idInterprete := Buscador.ObtenerIdInterprete(base, interprete)
+      tabla, err := base.Query("SELECT id_album, path, title, genre FROM rolas WHERE id_performer=?",idInterprete)
+      if err != nil { return err }
       var title, genre, path string
       var idAlbum int
       for tabla.Next() {
         tabla.Scan(&idAlbum, &path, &title, &genre)
-        performer := Buscador.BuscaInterprete(idInterprete, db)
-        album := Buscador.BuscaAlbum(idAlbum, db)
+        performer := Buscador.BuscaInterprete(idInterprete, base)
+        album := Buscador.BuscaAlbum(idAlbum, base)
         creaRenglon(title, performer, album, genre, path)
       }
       tabla.Close()
     }
     return nil
   } else if banderaTitle {
-    tabla, err := db.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
-    if err != nil { panic(err) }
+    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
+    if err != nil { return err }
     var title, genre, path string
     var idAlbum, idPerformer int
     for tabla.Next() {
       tabla.Scan(&idAlbum, &idPerformer, &path, &title, &genre)
-      performer := Buscador.BuscaInterprete(idPerformer, db)
-      Album := Buscador.BuscaAlbum(idAlbum, db)
+      performer := Buscador.BuscaInterprete(idPerformer, base)
+      Album := Buscador.BuscaAlbum(idAlbum, base)
       creaRenglon(title, performer, Album, genre, path)
     }
     tabla.Close()

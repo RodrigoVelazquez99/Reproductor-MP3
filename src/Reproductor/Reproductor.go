@@ -3,8 +3,9 @@ package main
 import(
   "github.com/gotk3/gotk3/gtk"
   "errors"
-  "fmt"
   "github.com/gotk3/gotk3/glib"
+  "github.com/RodrigoVelazquez99/Reproductor-MP3/src/Administrador"
+  "github.com/RodrigoVelazquez99/Reproductor-MP3/src/Minero"
 )
 
 const (
@@ -12,10 +13,12 @@ const (
 	COLUMN_PERFORMER
   COLUMN_ALBUM
   COLUMN_GENRE
-  path = "../Interfaz/interfaz.glade"
+  path = "../Interfaz/Interfaz.glade"
 )
 
 func main()  {
+  Administrador.IniciaBase()
+
   gtk.Init(nil)
   builder,err := build(path)
   if err != nil {
@@ -25,9 +28,12 @@ func main()  {
   if err != nil {
     panic(err)
   }
-  boton, err := button(builder)
+  boton, err := button(builder, "button1")
   if err != nil {
-
+    panic(err)
+  }
+  botonMinero, err1 := button(builder,"buttonMiner")
+  if err1 != nil {
     panic(err)
   }
   grid, err := grid(builder)
@@ -37,11 +43,31 @@ func main()  {
   }
   entry, err := entry(builder)
   treeView, listStore := creaTreeView()
+  treeView.SetSearchEntry(entry)
+  treeView.SetHoverSelection(true)
+  botonMinero.Connect("clicked", func ()  {
+    Minero.Mina()
+    rolas, err := Administrador.ObtenerBase()
+    if err == nil {
+      listStore.Clear()
+      actualizaLista(listStore, rolas)
+    }
+  })
   boton.Connect("clicked", func ()  {
-      s, err := entry.GetText()
-      if s != "" && err == nil {
-        fmt.Println(s)
+      entrada, err := entry.GetText()
+      if entrada != "" && err == nil {
         entry.SetText("")
+        ok := Administrador.LeeEntrada(entrada)
+        if ok {
+          treeView.ExpandAll()
+          listStore.Clear()
+          renglones := Administrador.ObtenerRenglones()
+          actualizaLista(listStore,renglones)
+          Administrador.VaciaRenglones()
+        } else {
+          listStore.Clear()
+
+        }
       }
   })
   ventana.SetTitle("Reproductor-MP3")
@@ -81,8 +107,8 @@ func window(builder *gtk.Builder) (*gtk.Window ,error) {
 	return ventana, nil
 }
 
-func button(builder *gtk.Builder) (*gtk.Button, error)  {
-  object, err := builder.GetObject("button1")
+func button(builder *gtk.Builder, tipo string) (*gtk.Button, error)  {
+  object, err := builder.GetObject(tipo)
   if err != nil {
     panic(err)
   }
