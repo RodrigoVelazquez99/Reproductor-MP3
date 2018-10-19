@@ -7,7 +7,13 @@ import(
   "github.com/gotk3/gotk3/glib"
 )
 
-const path = "../Interfaz/interfaz.glade"
+const (
+  COLUMN_TITLE = iota
+	COLUMN_PERFORMER
+  COLUMN_ALBUM
+  COLUMN_GENRE
+  path = "../Interfaz/interfaz.glade"
+)
 
 func main()  {
   gtk.Init(nil)
@@ -29,17 +35,20 @@ func main()  {
   if err != nil  {
     panic(err)
   }
-  //entry, err := entry(builder)
-  treeView, _ := creaTreeView()
+  entry, err := entry(builder)
+  treeView, listStore := creaTreeView()
   boton.Connect("clicked", func ()  {
-      fmt.Println("test")
+      s, err := entry.GetText()
+      if s != "" && err == nil {
+        fmt.Println(s)
+        entry.SetText("")
+      }
   })
   ventana.SetTitle("Reproductor-MP3")
 	ventana.SetDefaultSize(800, 500)
 	ventana.Connect("destroy", func ()  {
     gtk.MainQuit()
   })
-
   grid.Add(treeView)
 	ventana.ShowAll()
 	gtk.Main()
@@ -108,11 +117,6 @@ func entry(builder *gtk.Builder) (*gtk.Entry, error) {
   return entry,nil
 }
 
-const (
-	COLUMN_VERSION = iota
-	COLUMN_FEATURE
-)
-
 func creaColumna(nombre string, id int) *gtk.TreeViewColumn {
 	cellRenderer, err := gtk.CellRendererTextNew()
 	if err != nil {
@@ -130,11 +134,11 @@ func creaTreeView() (*gtk.TreeView, *gtk.ListStore) {
 	if err != nil {
 		panic(err)
 	}
-	treeView.AppendColumn(creaColumna("Title", COLUMN_VERSION))
-	treeView.AppendColumn(creaColumna("Performer", COLUMN_FEATURE))
-  treeView.AppendColumn(creaColumna("Album", COLUMN_VERSION))
-	treeView.AppendColumn(creaColumna("Genre", COLUMN_FEATURE))
-	listStore, err := gtk.ListStoreNew(glib.TYPE_STRING, glib.TYPE_STRING)
+	treeView.AppendColumn(creaColumna("Title", COLUMN_TITLE))
+	treeView.AppendColumn(creaColumna("Performer", COLUMN_PERFORMER))
+  treeView.AppendColumn(creaColumna("Album", COLUMN_ALBUM))
+	treeView.AppendColumn(creaColumna("Genre", COLUMN_GENRE))
+	listStore, err := gtk.ListStoreNew(glib.TYPE_STRING, glib.TYPE_STRING, glib.TYPE_STRING, glib.TYPE_STRING)
 	if err != nil {
 		panic(err)
 	}
@@ -142,12 +146,19 @@ func creaTreeView() (*gtk.TreeView, *gtk.ListStore) {
 	return treeView, listStore
 }
 
-func nuevoRenglon(listStore *gtk.ListStore, version, feature string) {
+func actualizaLista(listStore *gtk.ListStore, canciones []string)  {
+  i := 0
+  for i < len(canciones) {
+    nuevoRenglon(listStore,canciones[i],canciones[i+1],canciones[i+2],canciones[i+3])
+    i += 4
+  }
+}
+
+func nuevoRenglon(listStore *gtk.ListStore, titulo string , interprete string, album string, genero string) {
 	iter := listStore.Append()
 	err := listStore.Set(iter,
-		[]int{COLUMN_VERSION, COLUMN_FEATURE},
-		[]interface{}{version, feature})
-
+		[]int{COLUMN_TITLE, COLUMN_PERFORMER,COLUMN_ALBUM, COLUMN_GENRE},
+		[]interface{}{titulo, interprete, album, genero})
 	if err != nil {
 		panic(err)
 	}
