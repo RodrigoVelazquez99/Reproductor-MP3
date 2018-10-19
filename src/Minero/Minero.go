@@ -47,7 +47,10 @@ func buscaArchivos(carpeta string) {
     nombre := archivo.Name()
     ruta := carpeta + "/" + nombre
     if strings.Contains(nombre, ".mp3") {
-        creaCancion(ruta,carpeta)
+        err := creaCancion(ruta,carpeta)
+        if err != nil {
+          continue
+        }
     }
     if archivo.IsDir() {
       buscaArchivos(ruta)
@@ -55,10 +58,10 @@ func buscaArchivos(carpeta string) {
   }
 }
 
-func creaCancion(direccion string, directorio string) {
-  pista, error := id3v2.Open(direccion, id3v2.Options{Parse: true})
-  if error != nil {
-    panic(error)
+func creaCancion(direccion string, directorio string) error {
+  pista, err := id3v2.Open(direccion, id3v2.Options{Parse: true})
+  if err != nil {
+    return err
   }
   defer pista.Close()
   etiquetas, year := Etiquetas.ObtenerEtiquetas(pista, direccion)
@@ -73,6 +76,7 @@ func creaCancion(direccion string, directorio string) {
     carpeta: directorio + "/",
   }
   Canciones = append(Canciones, nuevaCancion)
+  return nil
 }
 
 func creaBase() *sql.DB {
