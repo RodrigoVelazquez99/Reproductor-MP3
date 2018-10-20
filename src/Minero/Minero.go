@@ -9,6 +9,7 @@ import(
   "strings"
   "os/user"
   "log"
+  "os"
 )
 
 /* Lee las etiquetas de cada archivo y crea la base */
@@ -33,6 +34,10 @@ func Mina() {
     }
   Canciones = make([]Cancion, 0)
   buscaArchivos(direccion.HomeDir + "/Music")
+  err1 := os.MkdirAll("../Base",0755)
+  if err1 != nil {
+    panic(err1)
+  }
   base := creaBase()
   defer base.Close()
   llenaBase(base)
