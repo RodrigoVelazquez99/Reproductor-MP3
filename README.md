@@ -12,12 +12,22 @@ Velázquez Cruz Rodrigo Fernando
 
 Numero de cuenta UNAM: 315254565
 
-## Instalacion:
+## Ejecucion:
 
 Los paquetes van en el directorio `$GOPATH`
 ```bash
 $ go get github.com/RodrigoVelazquez99/Reproductor-MP3
 ```
+```bash
+$ cd src/Reproductor/
+$ go run Reproductor.go
+```
+
+## Busquedas
+
+Para las busquedas, basta con poner "T:" antes del titulo de la cancion, "P:" antes del interprete y "A:" antes del album, separadas por coma.
+Por ejemplo; 
+  `T:SongTest, P:PerformerTest, A:AlbumTest`
 
 ### Bibliotecas
 
@@ -49,3 +59,9 @@ $ sudo apt-get install libglib2.0-dev
 ```bash
 $ sudo apt-get install build-essential
 ```
+### Errores Conocidos
+
+Faltan pruebas unitarias.
+
+Al abrir la ventana de editar etiquetas mas de una vez ya no permite la entrada de texto.
+
