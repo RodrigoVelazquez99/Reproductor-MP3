@@ -18,12 +18,9 @@ Los paquetes van en el directorio `$GOPATH`
 ```bash
 $ go get github.com/RodrigoVelazquez99/Reproductor-MP3
 ```
-!!!IMPORTANTE¡¡¡ se debe crear una carpeta en `src/` para que la base de datos de guarde.
 
 ```bash
-$ cd src
-$ mkdir Base
-$ cd Reproductor/
+$ cd src/Reproductor/
 $ go run Reproductor.go
 ```
 
