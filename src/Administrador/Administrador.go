@@ -41,7 +41,7 @@ func ObtenerBase() ([]string, error) {
     tabla.Scan(&idAlbum, &idPerformer, &path, &title, &genre)
     performer := Buscador.BuscaInterprete(idPerformer, base)
     Album := Buscador.BuscaAlbum(idAlbum, base)
-    rolas = append(rolas, title, performer, Album, genre)
+    rolas = append(rolas, title, performer, Album, genre, path)
   }
   tabla.Close()
   return rolas, nil
@@ -53,7 +53,7 @@ func VaciaRenglones()  {
 }
 
 func creaRenglon(titulo string, interprete string, album string, genero string, ruta string )  {
-  renglones = append(renglones, titulo, interprete, album, genero)
+  renglones = append(renglones, titulo, interprete, album, genero, ruta)
 }
 
 func buscaCancion(banderas []string, coincidencias []string) error {
