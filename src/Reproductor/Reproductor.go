@@ -1,7 +1,6 @@
 package main
 
 import(
-  "fmt"
   "github.com/gotk3/gotk3/gtk"
   "errors"
   "github.com/gotk3/gotk3/glib"
@@ -111,7 +110,6 @@ func main()  {
       columna4,_ := model.(*gtk.TreeModel).GetValue(iter,4)
       ruta,_ := columna4.GetString()
       cancionSeleccionada = ruta
-      fmt.Println(cancionSeleccionada)
       }
   })
   ventana2.Add(treeView)

@@ -56,6 +56,20 @@ func creaRenglon(titulo string, interprete string, album string, genero string, 
   renglones = append(renglones, titulo, interprete, album, genero, ruta)
 }
 
+func cambiaRenglon(nuevoTitulo string, nuevoInterprete string, nuevoAlbum string, nuevoGenero string, nuevaRuta string) error {
+  for i := 0; i < len(renglones) ; i++ {
+    if renglones[i] == nuevaRuta {
+      renglones[i-1] = nuevoGenero
+      renglones[i-2] = nuevoAlbum
+      renglones[i-3] = nuevoInterprete
+      renglones[i-4] = nuevoTitulo
+      return nil
+    }
+  }
+  return errors.New("Ocurrio un error")
+}
+
+
 func buscaCancion(banderas []string, coincidencias []string) error {
   var banderaTitle, banderaPerformer, banderaAlbum bool
   for i := 0; i < len(banderas) ; i++ {
@@ -200,4 +214,14 @@ func BuscaPorRuta(ruta string) []string {
   }
   tabla.Close()
   return etiquetas
+}
+
+func CambiaEtiquetas(nuevoTitulo string, nuevoInterprete string, nuevoAlbum string, nuevoGenero string, ruta string) {
+  idAlbum := Buscador.ObtenerIdAlbum(base, nuevoAlbum)
+  idInterprete := Buscador.ObtenerIdInterprete(base, nuevoInterprete)
+  tabla, err := base.Prepare("UPDATE rolas SET id_album=?, id_performer=?, path=?, title=?, genre=? WHERE path=?")
+  if err != nil { panic(err) }
+  tabla.Exec(idAlbum, idInterprete, ruta, nuevoTitulo, nuevoGenero, ruta)
+  cambiaRenglon(nuevoTitulo, nuevoInterprete, nuevoAlbum, nuevoGenero, ruta)
+  tabla.Close()
 }
