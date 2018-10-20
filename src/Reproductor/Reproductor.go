@@ -23,31 +23,26 @@ func main()  {
 
   gtk.Init(nil)
   builder,err := build(path)
-  if err != nil {
-    panic(err)
-  }
-  ventana, err := window(builder)
-  if err != nil {
-    panic(err)
-  }
+  if err != nil { panic(err) }
+  ventana, err := window(builder,"window1")
+  if err != nil { panic(err) }
   ventana2, err := scrolledWindow(builder)
-  if err != nil {
-    panic(err)
-  }
+  if err != nil { panic(err) }
   boton, err := button(builder, "button1")
-  if err != nil {
-    panic(err)
-  }
+  if err != nil { panic(err) }
   botonMinero, err1 := button(builder,"buttonMiner")
-  if err1 != nil {
-    panic(err)
-  }
+  if err1 != nil { panic(err) }
+  botonEditar, err2 := button(builder, "editTags")
+  if err2 != nil { panic(err) }
+  botonGuardar, err3 := button(builder, "editTag")
+  if err3 != nil { panic(err3) }
   grid, err := grid(builder)
   grid.SetOrientation(gtk.ORIENTATION_VERTICAL)
-  if err != nil  {
-    panic(err)
-  }
+  if err != nil { panic(err) }
   entry, err := entry(builder)
+  titleEntry, performerEntry, albumEntry, genreEntry, err := entryEdit(builder)
+  if err != nil{ panic(err) }
+  var cancionSeleccionada  string
   treeView, listStore := creaTreeView()
   treeView.SetSearchEntry(entry)
   botonMinero.Connect("clicked", func ()  {
@@ -71,11 +66,40 @@ func main()  {
           Administrador.VaciaRenglones()
         } else {
           listStore.Clear()
-
         }
       }
   })
-  var cancionSeleccionada  string
+
+  botonGuardar.Connect("clicked", func ()  {
+    titulo, err := titleEntry.GetText()
+    interprete, err := performerEntry.GetText()
+    album, err := albumEntry.GetText()
+    genero, err := genreEntry.GetText()
+    if err != nil { panic(err) }
+    Administrador.CambiaEtiquetas(cancionSeleccionada, titulo, interprete, album, genero)
+    renglones := Administrador.ObtenerRenglones()
+    actualizaLista(listStore, renglones)
+    Administrador.VaciaRenglones()
+  })
+
+  botonEditar.Connect("clicked", func ()  {
+    ventanaEditar,err := window(builder,"windowEdit")
+    if err != nil { panic(err) }
+      if cancionSeleccionada != "" {
+        etiquetas := Administrador.BuscaPorRuta(cancionSeleccionada)
+        titleEntry.SetText(etiquetas[0])
+        performerEntry.SetText(etiquetas[1])
+        albumEntry.SetText(etiquetas[2])
+        genreEntry.SetText(etiquetas[3])
+      } else {
+        titleEntry.SetText("")
+        performerEntry.SetText("")
+        albumEntry.SetText("")
+        genreEntry.SetText("")
+      }
+      ventanaEditar.ShowAll()
+  })
+
   seleccion, err := treeView.GetSelection()
 	if err != nil {
 		panic(err)
@@ -101,6 +125,27 @@ func main()  {
 	gtk.Main()
 }
 
+func entryEdit(builder *gtk.Builder) (*gtk.Entry, *gtk.Entry, *gtk.Entry, *gtk.Entry, error)  {
+  object, err := builder.GetObject("setTitle")
+  if err != nil { panic(err) }
+  entryTitle, ok := object.(*gtk.Entry)
+  if !ok { return nil, nil, nil, nil, err }
+  object1, err := builder.GetObject("setPerformer")
+  if err != nil { panic(err) }
+  entryPerformer,ok := object1.(*gtk.Entry)
+  if !ok { return nil, nil, nil, nil, err }
+  object2, err := builder.GetObject("setAlbum")
+  if err != nil { panic(err) }
+  entryAlbum,ok := object2.(*gtk.Entry)
+  if !ok { return nil, nil, nil, nil, err }
+  object3, err := builder.GetObject("setGenre")
+  if err != nil { panic(err) }
+  entryGenre,ok := object3.(*gtk.Entry)
+  if !ok { return nil, nil, nil, nil, err }
+  return entryTitle, entryPerformer, entryAlbum, entryGenre, nil
+}
+
+
 func build(ruta string) (*gtk.Builder, error)  {
   	builder, err := gtk.BuilderNew()
   	if err != nil {
@@ -116,8 +161,8 @@ func build(ruta string) (*gtk.Builder, error)  {
 }
 
 
-func window(builder *gtk.Builder) (*gtk.Window ,error) {
-  object, err := builder.GetObject("window1")
+func window(builder *gtk.Builder, tipo string) (*gtk.Window ,error) {
+  object, err := builder.GetObject(tipo)
 	if err != nil {
 		return nil, err
 	}
@@ -139,6 +184,19 @@ func scrolledWindow(builder *gtk.Builder) (*gtk.ScrolledWindow, error) {
 	}
 	return ventana, nil
 }
+
+func dialog(builder *gtk.Builder) (*gtk.Dialog, error)  {
+  object, err := builder.GetObject("windowEdit")
+	if err != nil {
+		return nil, err
+	}
+	ventana, ok := object.(*gtk.Dialog)
+	if !ok {
+		return nil, err
+	}
+	return ventana, nil
+}
+
 
 func button(builder *gtk.Builder, tipo string) (*gtk.Button, error)  {
   object, err := builder.GetObject(tipo)

@@ -185,3 +185,19 @@ func buscaCancion(banderas []string, coincidencias []string) error {
     return errors.New("fallo")
   }
 }
+
+func BuscaPorRuta(ruta string) []string {
+  etiquetas := make([]string, 0)
+  tabla,err := base.Query("SELECT title, id_performer, id_album, genre FROM rolas WHERE path=?",ruta)
+  if err != nil { panic(err) }
+  var titulo, genero string
+  var idInterprete, idAlbum int
+  if tabla.Next() {
+    tabla.Scan(&titulo, &idInterprete, &idAlbum, &genero)
+    album := Buscador.BuscaAlbum(idAlbum, base)
+    interprete := Buscador.BuscaInterprete(idInterprete, base)
+    etiquetas = append(etiquetas, titulo, interprete, album, genero)
+  }
+  tabla.Close()
+  return etiquetas
+}
