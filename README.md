@@ -27,7 +27,7 @@ $ go run Reproductor.go
 ## Busquedas
 
 Para las busquedas, basta con poner "T:" antes del titulo de la cancion, "P:" antes del interprete y "A:" antes del album, separadas por coma.
-Por ejemplo; 
+Por ejemplo;
   `T:SongTest, P:PerformerTest, A:AlbumTest`
 
 ### Bibliotecas
@@ -64,5 +64,4 @@ $ sudo apt-get install build-essential
 
 Faltan pruebas unitarias.
 
-Al abrir la ventana de editar etiquetas mas de una vez ya no permite la entrada de texto.
-
+Al destruir la ventana de edición de etiquetas ya no se puede seguir editando 

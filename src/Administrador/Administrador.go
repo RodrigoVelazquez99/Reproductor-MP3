@@ -44,6 +44,7 @@ func ObtenerBase() ([]string, error) {
     rolas = append(rolas, title, performer, Album, genre, path)
   }
   tabla.Close()
+  renglones = rolas
   return rolas, nil
 }
 
@@ -56,9 +57,12 @@ func creaRenglon(titulo string, interprete string, album string, genero string, 
   renglones = append(renglones, titulo, interprete, album, genero, ruta)
 }
 
-func cambiaRenglon(nuevoTitulo string, nuevoInterprete string, nuevoAlbum string, nuevoGenero string, nuevaRuta string) error {
+/**
+* Modifica el renglon de la interfaz
+*/
+func cambiaRenglon(nuevoTitulo string, nuevoInterprete string, nuevoAlbum string, nuevoGenero string, ruta string) error {
   for i := 0; i < len(renglones) ; i++ {
-    if renglones[i] == nuevaRuta {
+    if renglones[i] == ruta {
       renglones[i-1] = nuevoGenero
       renglones[i-2] = nuevoAlbum
       renglones[i-3] = nuevoInterprete
@@ -69,8 +73,12 @@ func cambiaRenglon(nuevoTitulo string, nuevoInterprete string, nuevoAlbum string
   return errors.New("Ocurrio un error")
 }
 
-
+/**
+* Busca las canciones que coinciden con la entrada y las agrega
+* a los renglones que se muestran en la interfaz
+*/
 func buscaCancion(banderas []string, coincidencias []string) error {
+  VaciaRenglones()
   var banderaTitle, banderaPerformer, banderaAlbum bool
   for i := 0; i < len(banderas) ; i++ {
     if string(banderas[i]) == "title" {
@@ -87,7 +95,7 @@ func buscaCancion(banderas []string, coincidencias []string) error {
     }
   }
   if banderaTitle && banderaAlbum && banderaPerformer {
-    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
+    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '" + string(coincidencias[0]) + "%'")
     if err != nil { return err }
     var title, genre, path string
     var idAlbum, idPerformer int
@@ -102,7 +110,7 @@ func buscaCancion(banderas []string, coincidencias []string) error {
     tabla.Close()
     return nil
   } else if banderaTitle && banderaAlbum {
-    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
+    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '" + string(coincidencias[0]) + "%'")
     if err != nil { return err }
     var title, genre, path string
     var idAlbum, idPerformer int
@@ -117,7 +125,7 @@ func buscaCancion(banderas []string, coincidencias []string) error {
     tabla.Close()
     return nil
   } else if banderaTitle && banderaPerformer{
-    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
+    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '" + string(coincidencias[0]) + "%'")
     if err != nil { return err }
     var title, genre, path string
     var idAlbum, idPerformer int
@@ -183,7 +191,7 @@ func buscaCancion(banderas []string, coincidencias []string) error {
     }
     return nil
   } else if banderaTitle {
-    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '%" + string(coincidencias[0]) + "%'")
+    tabla, err := base.Query("SELECT id_album, id_performer, path, title, genre FROM rolas WHERE title LIKE '" + string(coincidencias[0]) + "%'")
     if err != nil { return err }
     var title, genre, path string
     var idAlbum, idPerformer int
@@ -216,7 +224,7 @@ func BuscaPorRuta(ruta string) []string {
   return etiquetas
 }
 
-func CambiaEtiquetas(nuevoTitulo string, nuevoInterprete string, nuevoAlbum string, nuevoGenero string, ruta string) {
+func CambiaEtiquetas(ruta string, nuevoTitulo string, nuevoInterprete string, nuevoAlbum string, nuevoGenero string) {
   idAlbum := Buscador.ObtenerIdAlbum(base, nuevoAlbum)
   idInterprete := Buscador.ObtenerIdInterprete(base, nuevoInterprete)
   tabla, err := base.Prepare("UPDATE rolas SET id_album=?, id_performer=?, path=?, title=?, genre=? WHERE path=?")

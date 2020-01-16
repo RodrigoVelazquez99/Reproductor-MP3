@@ -33,11 +33,9 @@ func Mina() {
         log.Fatal( err )
     }
   Canciones = make([]Cancion, 0)
-  buscaArchivos(direccion.HomeDir + "/Music")
+  buscaArchivos(direccion.HomeDir + "/Música")
   err1 := os.MkdirAll("../Base",0755)
-  if err1 != nil {
-    panic(err1)
-  }
+  if err1 != nil { panic(err1) }
   base := creaBase()
   defer base.Close()
   llenaBase(base)

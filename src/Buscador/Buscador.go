@@ -5,7 +5,7 @@ import(
   _ "github.com/mattn/go-sqlite3"
 )
 
-
+/* Busca del id de un album, sino existe lo crea */
 func ObtenerIdAlbum(db *sql.DB, album string) int {
   tabla, err := db.Query("SELECT id_album FROM albums WHERE name =?",album)
   if err != nil { panic(err) }
@@ -29,7 +29,7 @@ func ObtenerIdInterprete(db *sql.DB, interprete string) int {
 }
 
 func BuscaAlbums(db *sql.DB, coincidencia string) []string {
-  tabla, err := db.Query("SELECT name FROM albums WHERE name LIKE '%" + coincidencia + "%'")
+  tabla, err := db.Query("SELECT name FROM albums WHERE name LIKE '" + coincidencia + "%'")
   albums := make([]string, 0)
   if err != nil { panic(err) }
   var name string
@@ -42,7 +42,7 @@ func BuscaAlbums(db *sql.DB, coincidencia string) []string {
 }
 
 func BuscaInterpretes(db *sql.DB, coincidencia string) []string {
-  tabla, err := db.Query("SELECT name FROM performers WHERE name LIKE '%" + coincidencia + "%'")
+  tabla, err := db.Query("SELECT name FROM performers WHERE name LIKE '" + coincidencia + "%'")
   interpretes := make([]string, 0)
   if err != nil { panic(err) }
   var name string

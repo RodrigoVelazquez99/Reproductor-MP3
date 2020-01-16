@@ -25,6 +25,8 @@ func main()  {
   if err != nil { panic(err) }
   ventana, err := window(builder,"window1")
   if err != nil { panic(err) }
+  ventanaEditar,err := window(builder,"windowEdit")
+  if err != nil { panic(err) }
   ventana2, err := scrolledWindow(builder)
   if err != nil { panic(err) }
   boton, err := button(builder, "button1")
@@ -41,9 +43,11 @@ func main()  {
   entry, err := entry(builder)
   titleEntry, performerEntry, albumEntry, genreEntry, err := entryEdit(builder)
   if err != nil{ panic(err) }
-  var cancionSeleccionada  string
+  var rutaCancionSeleccionada  string
   treeView, listStore := creaTreeView()
   treeView.SetSearchEntry(entry)
+
+
   botonMinero.Connect("clicked", func ()  {
     Minero.Mina()
     rolas, err := Administrador.ObtenerBase()
@@ -52,68 +56,65 @@ func main()  {
       actualizaLista(listStore, rolas)
     }
   })
+
   boton.Connect("clicked", func ()  {
       entrada, err := entry.GetText()
       if entrada != "" && err == nil {
         entry.SetText("")
         ok := Administrador.LeeEntrada(entrada)
+        listStore.Clear()
         if ok {
           treeView.ExpandAll()
-          listStore.Clear()
           renglones := Administrador.ObtenerRenglones()
           actualizaLista(listStore,renglones)
-          Administrador.VaciaRenglones()
-        } else {
-          listStore.Clear()
         }
       }
   })
 
+  /**
+  * Cuando se modifican las etiquetas de una cancion se actualiza la interfaz y
+  * se oculta la ventana de editar
+  */
   botonGuardar.Connect("clicked", func ()  {
-    titulo, err := titleEntry.GetText()
-    interprete, err := performerEntry.GetText()
-    album, err := albumEntry.GetText()
-    genero, err := genreEntry.GetText()
+    nuevoTitulo, err := titleEntry.GetText()
+    nuevoInterprete, err := performerEntry.GetText()
+    nuevoAlbum, err := albumEntry.GetText()
+    nuevoGenero, err := genreEntry.GetText()
     if err != nil { panic(err) }
-    Administrador.CambiaEtiquetas(cancionSeleccionada, titulo, interprete, album, genero)
+    Administrador.CambiaEtiquetas(rutaCancionSeleccionada, nuevoTitulo, nuevoInterprete, nuevoAlbum, nuevoGenero)
+    listStore.Clear()
     renglones := Administrador.ObtenerRenglones()
     actualizaLista(listStore, renglones)
-    Administrador.VaciaRenglones()
+    ventanaEditar.Hide()
   })
 
-  botonEditar.Connect("clicked", func ()  {
-    ventanaEditar,err := window(builder,"windowEdit")
-    if err != nil { panic(err) }
-      if cancionSeleccionada != "" {
-        etiquetas := Administrador.BuscaPorRuta(cancionSeleccionada)
-        titleEntry.SetText(etiquetas[0])
-        performerEntry.SetText(etiquetas[1])
-        albumEntry.SetText(etiquetas[2])
-        genreEntry.SetText(etiquetas[3])
-      } else {
-        titleEntry.SetText("")
-        performerEntry.SetText("")
-        albumEntry.SetText("")
-        genreEntry.SetText("")
-      }
+  botonEditar.Connect("clicked", func () {
+    if rutaCancionSeleccionada != "" {
+      etiquetas := Administrador.BuscaPorRuta(rutaCancionSeleccionada)
+      titleEntry.SetText(etiquetas[0])
+      performerEntry.SetText(etiquetas[1])
+      albumEntry.SetText(etiquetas[2])
+      genreEntry.SetText(etiquetas[3])
       ventanaEditar.ShowAll()
+    }
   })
 
   seleccion, err := treeView.GetSelection()
-	if err != nil {
-		panic(err)
-	}
+	if err != nil { panic(err) }
 	seleccion.SetMode(gtk.SELECTION_SINGLE)
   seleccion.Connect("changed", func ()  {
     model, iter, ok := seleccion.GetSelected()
     if ok {
       columna4,_ := model.(*gtk.TreeModel).GetValue(iter,4)
       ruta,_ := columna4.GetString()
-      cancionSeleccionada = ruta
+      rutaCancionSeleccionada = ruta
       }
   })
   ventana2.Add(treeView)
   ventana2.ShowAll()
+  ventanaEditar.Connect("destroy", func () {
+    ventanaEditar.Hide()
+  })
   ventana.SetTitle("Reproductor-MP3")
 	ventana.SetDefaultSize(800, 500)
 	ventana.Connect("destroy", func ()  {
