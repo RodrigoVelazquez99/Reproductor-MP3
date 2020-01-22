@@ -1,7 +1,6 @@
 package main
 
 import(
-  "fmt"
   "github.com/gotk3/gotk3/gtk"
   "errors"
   "github.com/gotk3/gotk3/glib"
@@ -39,9 +38,6 @@ func main()  {
   botonMinar, _ := button(builder, "buttonMiner1")
   botonCancelarMinar, _:= button(builder, "cancelMin")
 
-
-
-  //botonGroup, _ := button(builder, "buttonGroup")
 
   grid, err := grid(builder)
   grid.SetOrientation(gtk.ORIENTATION_VERTICAL)
@@ -90,8 +86,12 @@ func main()  {
     ventanaAdvertencia.Hide()
   })
 
-  windowPerson, _ := window(builder, "windowPerson")
+  /* Ventana para requerir que se llenen todos los campos */
+  windowEntryReq, _ := window(builder, "windowEntry")
+  botonEntryReq, _ := button(builder, "buttonAceptEntry")
 
+  /* Ventana para agregar una persona */
+  windowPerson, _ := window(builder, "windowPerson")
   botonPerson, _ := button(builder, "buttonPerson1")
   botonAddPerson, _ := button(builder, "buttonAddPerson")
   botonCancelarPerson, _ := button(builder, "cancelPerson")
@@ -108,6 +108,10 @@ func main()  {
   })
   /* Se presiona el boton de "Cancelar" en la opcion de agregar una Persona */
   botonCancelarPerson.Connect("clicked", func () {
+    entryPersonNa.SetText("")
+    entryPersonRn.SetText("")
+    entryPersonBd.SetText("")
+    entryPersonDd.SetText("")
     windowPerson.Hide()
   })
   /* Se guarda la nueva Persona creada */
@@ -120,10 +124,6 @@ func main()  {
         person_rn != "" &&
         person_bd != "" &&
         person_dd != "") {
-      fmt.Println(person_na + "\n" +
-                person_rn + "\n" +
-                person_bd + "\n" +
-                person_dd)
       entryPersonNa.SetText("")
       entryPersonRn.SetText("")
       entryPersonBd.SetText("")
@@ -132,9 +132,56 @@ func main()  {
       windowPerson.Hide()
     } else {
       //Lanzar ventana de autocompletar busqueda...
+      windowEntryReq.ShowAll()
     }
   })
 
+  /* Ventana para agregar un grupo */
+  windowGroup, _ := window(builder, "windowGroup")
+  /* Botones de la entrada para agregar un grupo */
+  botonGroup, _ := button(builder, "buttonGroup1")
+  botonAddGroup, _ := button(builder, "addGroup")
+  botonCancelGroup, _ := button(builder, "cancelGroup")
+  /* Las entradas de la ventana para agregar un grupo */
+  entryGroupN, _ := entry(builder, "entryGroupName")
+  entryGroupSd, _ := entry(builder, "entryGroupStartDate")
+  entryGroupEd, _ := entry(builder, "entryGroupEndDate")
+
+  /* Se presiona el boton de  "Agregar Interprete (Grupo)" */
+  botonGroup.Connect("clicked", func () {
+    windowGroup.ShowAll()
+  })
+  /* Se agrega el nuevo grupo */
+  botonAddGroup.Connect("clicked", func () {
+    group_n, _ := entryGroupN.GetText()
+    group_sd, _ := entryGroupSd.GetText()
+    group_ed, _ := entryGroupEd.GetText()
+    if(group_n != "" &&
+       group_sd != "" &&
+       group_ed != ""){
+      entryGroupN.SetText("")
+      entryGroupSd.SetText("")
+      entryGroupEd.SetText("")
+      Administrador.InsetaInterpreteGrupo(group_n, group_sd, group_ed)
+      windowGroup.Hide()
+    } else {
+      // Lanzar ventana para terminar de insertar un grupo
+      windowEntryReq.ShowAll()
+      }
+  })
+
+  /* Se cancela el agregar un nuevo grupo */
+  botonCancelGroup.Connect("clicked", func (){
+    entryGroupN.SetText("")
+    entryGroupSd.SetText("")
+    entryGroupEd.SetText("")
+    windowGroup.Hide()
+  })
+
+  /* Se cierra la ventana de advertencia para llenar las entradas */
+  botonEntryReq.Connect("clicked", func (){
+    windowEntryReq.Hide()
+  })
 
   /**
   * Cuando se modifican las etiquetas de una cancion se actualiza la interfaz y

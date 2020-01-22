@@ -63,5 +63,3 @@ $ sudo apt-get install build-essential
 ### Errores Conocidos
 
 Faltan pruebas unitarias.
-
-Al destruir la ventana de edición de etiquetas ya no se puede seguir editando 

@@ -85,6 +85,17 @@ func cambiaRenglon(nuevoTitulo string, nuevoInterprete string, nuevoAlbum string
     stm1.Close()
   }
 
+  func InsetaInterpreteGrupo(group_n string, group_sd string, group_ed string){
+    stm, err := base.Prepare("INSERT INTO groups (name, start_date, end_date) VALUES (?,?,?)")
+    if err != nil { panic(err) }
+    stm.Exec(group_n, group_sd, group_ed)
+    stm.Close()
+    stm1, err1 := base.Prepare("INSERT INTO performers (id_type, name) VALUES (?, ?)")
+    if err1 != nil { panic(err1) }
+    stm1.Exec(2, group_n)
+    stm1.Close()
+  }
+
 
 /**
 * Busca las canciones que coinciden con la entrada y las agrega
