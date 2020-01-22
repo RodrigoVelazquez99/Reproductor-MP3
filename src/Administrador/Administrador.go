@@ -73,6 +73,19 @@ func cambiaRenglon(nuevoTitulo string, nuevoInterprete string, nuevoAlbum string
   return errors.New("Ocurrio un error")
 }
 
+  /* Inserta una persona a la base de datos */
+  func InsertaInterpretePersona(person_na string, person_rn string, person_bd string, person_dd string){
+    stm, err := base.Prepare("INSERT INTO persons (stage_name, real_name, birth_date, death_date) VALUES (?, ?, ?, ?)")
+    if err != nil { panic(err) }
+    stm.Exec(person_na, person_rn, person_bd, person_dd)
+    stm.Close()
+    stm1, err1 := base.Prepare("INSERT INTO performers (id_type, name) VALUES (?, ?)")
+    if err1 != nil { panic(err1) }
+    stm1.Exec(1, person_na)
+    stm1.Close()
+  }
+
+
 /**
 * Busca las canciones que coinciden con la entrada y las agrega
 * a los renglones que se muestran en la interfaz

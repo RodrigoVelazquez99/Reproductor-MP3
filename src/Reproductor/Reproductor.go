@@ -1,6 +1,7 @@
 package main
 
 import(
+  "fmt"
   "github.com/gotk3/gotk3/gtk"
   "errors"
   "github.com/gotk3/gotk3/glib"
@@ -19,35 +20,66 @@ const (
 
 func main()  {
   Administrador.IniciaBase()
-
   gtk.Init(nil)
   builder,err := build(path)
   if err != nil { panic(err) }
-  ventana, err := window(builder,"window1")
-  if err != nil { panic(err) }
-  ventanaEditar,err := window(builder,"windowEdit")
-  if err != nil { panic(err) }
-  ventana2, err := scrolledWindow(builder)
-  if err != nil { panic(err) }
-  boton, err := button(builder, "button1")
-  if err != nil { panic(err) }
-  botonMinero, err1 := button(builder,"buttonMiner")
-  if err1 != nil { panic(err) }
-  botonEditar, err2 := button(builder, "editTags")
-  if err2 != nil { panic(err) }
-  botonGuardar, err3 := button(builder, "editTag")
-  if err3 != nil { panic(err3) }
+
+  ventana, _ := window(builder,"window1")
+  ventanaEditar, _ := window(builder,"windowEdit")
+  ventana2, _ := scrolledWindow(builder)
+  ventanaAdvertencia, _ := window(builder, "windowAdvertencia")
+
+  boton, _ := button(builder, "button1")
+
+  botonEditar, _ := button(builder, "editTags")
+  botonGuardar, _ := button(builder, "editTag")
+  botonCancelarEditar, _ := button(builder, "cancelTag")
+
+  botonMinero, _ := button(builder,"buttonMiner")
+  botonMinar, _ := button(builder, "buttonMiner1")
+  botonCancelarMinar, _:= button(builder, "cancelMin")
+
+
+
+  //botonGroup, _ := button(builder, "buttonGroup")
+
   grid, err := grid(builder)
   grid.SetOrientation(gtk.ORIENTATION_VERTICAL)
   if err != nil { panic(err) }
-  entry, err := entry(builder)
+  busqueda, _ := entry(builder, "entry1")
+  /* FACTORIZAR */
   titleEntry, performerEntry, albumEntry, genreEntry, err := entryEdit(builder)
-  if err != nil{ panic(err) }
+  //if err != nil{ panic(err) }
   var rutaCancionSeleccionada  string
   treeView, listStore := creaTreeView()
-  treeView.SetSearchEntry(entry)
+  treeView.SetSearchEntry(busqueda)
 
+  /* Cuando se quiere buscar una cancion */
+  boton.Connect("clicked", func ()  {
+    entrada, err := busqueda.GetText()
+    if entrada != "" && err == nil {
+      busqueda.SetText("")
+      ok := Administrador.LeeEntrada(entrada)
+      listStore.Clear()
+      if ok {
+        treeView.ExpandAll()
+        renglones := Administrador.ObtenerRenglones()
+        actualizaLista(listStore,renglones)
+      }
+    }
+  })
 
+  /* Cuando se presiona el boton de minar */
+  botonMinar.Connect("clicked", func () {
+    ventanaAdvertencia.ShowAll()
+  })
+
+  /* Cuando se cancela la opcion de minar en la advertencia */
+  botonCancelarMinar.Connect("clicked", func () {
+    ventanaAdvertencia.Hide()
+  })
+
+  /* Cuando se acepta la opcion de minar en el cuadro de advertencia */
   botonMinero.Connect("clicked", func ()  {
     Minero.Mina()
     rolas, err := Administrador.ObtenerBase()
@@ -55,21 +87,54 @@ func main()  {
       listStore.Clear()
       actualizaLista(listStore, rolas)
     }
+    ventanaAdvertencia.Hide()
   })
 
-  boton.Connect("clicked", func ()  {
-      entrada, err := entry.GetText()
-      if entrada != "" && err == nil {
-        entry.SetText("")
-        ok := Administrador.LeeEntrada(entrada)
-        listStore.Clear()
-        if ok {
-          treeView.ExpandAll()
-          renglones := Administrador.ObtenerRenglones()
-          actualizaLista(listStore,renglones)
-        }
-      }
+  windowPerson, _ := window(builder, "windowPerson")
+
+  botonPerson, _ := button(builder, "buttonPerson1")
+  botonAddPerson, _ := button(builder, "buttonAddPerson")
+  botonCancelarPerson, _ := button(builder, "cancelPerson")
+
+  /* Entradas de la ventana para agregar una persona */
+  entryPersonNa, _ := entry(builder, "entryPersonStageName")
+  entryPersonRn, _ := entry(builder, "entryPersonRealName")
+  entryPersonBd, _ := entry(builder, "entryPersonBirthDate")
+  entryPersonDd, _ := entry(builder, "entryPersonDeathDate")
+
+  /* Se presiona el boton de "Agregar Interprete (Persona)" */
+  botonPerson.Connect("clicked", func () {
+    windowPerson.ShowAll()
   })
+  /* Se presiona el boton de "Cancelar" en la opcion de agregar una Persona */
+  botonCancelarPerson.Connect("clicked", func () {
+    windowPerson.Hide()
+  })
+  /* Se guarda la nueva Persona creada */
+  botonAddPerson.Connect("clicked", func (){
+    person_na, _ := entryPersonNa.GetText()
+    person_rn, _ := entryPersonRn.GetText()
+    person_bd, _ := entryPersonBd.GetText()
+    person_dd, _ := entryPersonDd.GetText()
+    if (person_na != "" &&
+        person_rn != "" &&
+        person_bd != "" &&
+        person_dd != "") {
+      fmt.Println(person_na + "\n" +
+                person_rn + "\n" +
+                person_bd + "\n" +
+                person_dd)
+      entryPersonNa.SetText("")
+      entryPersonRn.SetText("")
+      entryPersonBd.SetText("")
+      entryPersonDd.SetText("")
+      Administrador.InsertaInterpretePersona(person_na, person_rn, person_bd, person_dd);
+      windowPerson.Hide()
+    } else {
+      //Lanzar ventana de autocompletar busqueda...
+    }
+  })
+
 
   /**
   * Cuando se modifican las etiquetas de una cancion se actualiza la interfaz y
@@ -88,6 +153,12 @@ func main()  {
     ventanaEditar.Hide()
   })
 
+  /* Cuando de cancela la accion de editar etiquetas */
+  botonCancelarEditar.Connect("clicked", func () {
+    ventanaEditar.Hide()
+  })
+
+  /* Cuando se presiona la opcion de editar una cancion */
   botonEditar.Connect("clicked", func () {
     if rutaCancionSeleccionada != "" {
       etiquetas := Administrador.BuscaPorRuta(rutaCancionSeleccionada)
@@ -143,6 +214,7 @@ func entryEdit(builder *gtk.Builder) (*gtk.Entry, *gtk.Entry, *gtk.Entry, *gtk.E
   if !ok { return nil, nil, nil, nil, err }
   return entryTitle, entryPerformer, entryAlbum, entryGenre, nil
 }
+
 
 
 func build(ruta string) (*gtk.Builder, error)  {
@@ -221,8 +293,8 @@ func grid(builder *gtk.Builder) (*gtk.Grid, error)  {
   return grid, nil
 }
 
-func entry(builder *gtk.Builder) (*gtk.Entry, error) {
-  object, err := builder.GetObject("entry1")
+func entry(builder *gtk.Builder, id string) (*gtk.Entry, error) {
+  object, err := builder.GetObject(id)
   if err != nil {
     panic(err)
   }
@@ -230,7 +302,7 @@ func entry(builder *gtk.Builder) (*gtk.Entry, error) {
   if !ok {
     return nil, err
   }
-  return entry,nil
+  return entry, nil
 }
 
 func creaColumna(nombre string, id int) *gtk.TreeViewColumn {
