@@ -20,38 +20,41 @@ const (
 func main()  {
   Administrador.IniciaBase()
   gtk.Init(nil)
-  builder,err := build(path)
-  if err != nil { panic(err) }
+  builder := build(path)
 
-  ventana, _ := window(builder,"window1")
-  ventanaEditar, _ := window(builder,"windowEdit")
-  ventana2, _ := scrolledWindow(builder)
-  ventanaAdvertencia, _ := window(builder, "windowAdvertencia")
+  ventana := window(builder,"window1")
+  ventanaEditar := window(builder,"windowEdit")
+  ventana2 := scrolledWindow(builder)
+  ventanaAdvertencia := window(builder, "windowAdvertencia")
 
-  boton, _ := button(builder, "button1")
+  boton := button(builder, "button1")
 
-  botonEditar, _ := button(builder, "editTags")
-  botonGuardar, _ := button(builder, "editTag")
-  botonCancelarEditar, _ := button(builder, "cancelTag")
+  botonEditar := button(builder, "editTags")
+  botonGuardar := button(builder, "editTag")
+  botonCancelarEditar := button(builder, "cancelTag")
 
-  botonMinero, _ := button(builder,"buttonMiner")
-  botonMinar, _ := button(builder, "buttonMiner1")
-  botonCancelarMinar, _:= button(builder, "cancelMin")
+  botonMinero := button(builder,"buttonMiner")
+  botonMinar := button(builder, "buttonMiner1")
+  botonCancelarMinar:= button(builder, "cancelMin")
 
-
-  grid, err := grid(builder)
+  grid := grid(builder)
   grid.SetOrientation(gtk.ORIENTATION_VERTICAL)
-  if err != nil { panic(err) }
-  busqueda, _ := entry(builder, "entry1")
-  /* FACTORIZAR */
-  titleEntry, performerEntry, albumEntry, genreEntry, err := entryEdit(builder)
-  //if err != nil{ panic(err) }
+
+  busqueda := entry(builder, "entry1")
+
+  /* Entradas para la opcion de editar las etiquetas de una cancion */
+  titleEntry := entry (builder, "setTitle")
+  performerEntry := entry(builder, "setPerformer")
+  albumEntry := entry(builder, "setAlbum")
+  genreEntry := entry(builder, "setGenre")
+  /* La ruta de la cancion que ha sido seleccionada */
   var rutaCancionSeleccionada  string
+
   treeView, listStore := creaTreeView()
   treeView.SetSearchEntry(busqueda)
 
   /* Cuando se quiere buscar una cancion */
-  boton.Connect("clicked", func ()  {
+  boton.Connect("clicked", func () {
     entrada, err := busqueda.GetText()
     if entrada != "" && err == nil {
       busqueda.SetText("")
@@ -87,20 +90,20 @@ func main()  {
   })
 
   /* Ventana para requerir que se llenen todos los campos */
-  windowEntryReq, _ := window(builder, "windowEntry")
-  botonEntryReq, _ := button(builder, "buttonAceptEntry")
+  windowEntryReq := window(builder, "windowEntry")
+  botonEntryReq := button(builder, "buttonAceptEntry")
 
   /* Ventana para agregar una persona */
-  windowPerson, _ := window(builder, "windowPerson")
-  botonPerson, _ := button(builder, "buttonPerson1")
-  botonAddPerson, _ := button(builder, "buttonAddPerson")
-  botonCancelarPerson, _ := button(builder, "cancelPerson")
+  windowPerson := window(builder, "windowPerson")
+  botonPerson := button(builder, "buttonPerson1")
+  botonAddPerson := button(builder, "buttonAddPerson")
+  botonCancelarPerson := button(builder, "cancelPerson")
 
   /* Entradas de la ventana para agregar una persona */
-  entryPersonNa, _ := entry(builder, "entryPersonStageName")
-  entryPersonRn, _ := entry(builder, "entryPersonRealName")
-  entryPersonBd, _ := entry(builder, "entryPersonBirthDate")
-  entryPersonDd, _ := entry(builder, "entryPersonDeathDate")
+  entryPersonNa := entry(builder, "entryPersonStageName")
+  entryPersonRn := entry(builder, "entryPersonRealName")
+  entryPersonBd := entry(builder, "entryPersonBirthDate")
+  entryPersonDd := entry(builder, "entryPersonDeathDate")
 
   /* Se presiona el boton de "Agregar Interprete (Persona)" */
   botonPerson.Connect("clicked", func () {
@@ -137,15 +140,15 @@ func main()  {
   })
 
   /* Ventana para agregar un grupo */
-  windowGroup, _ := window(builder, "windowGroup")
+  windowGroup := window(builder, "windowGroup")
   /* Botones de la entrada para agregar un grupo */
-  botonGroup, _ := button(builder, "buttonGroup1")
-  botonAddGroup, _ := button(builder, "addGroup")
-  botonCancelGroup, _ := button(builder, "cancelGroup")
+  botonGroup := button(builder, "buttonGroup1")
+  botonAddGroup := button(builder, "addGroup")
+  botonCancelGroup := button(builder, "cancelGroup")
   /* Las entradas de la ventana para agregar un grupo */
-  entryGroupN, _ := entry(builder, "entryGroupName")
-  entryGroupSd, _ := entry(builder, "entryGroupStartDate")
-  entryGroupEd, _ := entry(builder, "entryGroupEndDate")
+  entryGroupN := entry(builder, "entryGroupName")
+  entryGroupSd := entry(builder, "entryGroupStartDate")
+  entryGroupEd := entry(builder, "entryGroupEndDate")
 
   /* Se presiona el boton de  "Agregar Interprete (Grupo)" */
   botonGroup.Connect("clicked", func () {
@@ -242,114 +245,93 @@ func main()  {
 	gtk.Main()
 }
 
-func entryEdit(builder *gtk.Builder) (*gtk.Entry, *gtk.Entry, *gtk.Entry, *gtk.Entry, error)  {
-  object, err := builder.GetObject("setTitle")
-  if err != nil { panic(err) }
-  entryTitle, ok := object.(*gtk.Entry)
-  if !ok { return nil, nil, nil, nil, err }
-  object1, err := builder.GetObject("setPerformer")
-  if err != nil { panic(err) }
-  entryPerformer,ok := object1.(*gtk.Entry)
-  if !ok { return nil, nil, nil, nil, err }
-  object2, err := builder.GetObject("setAlbum")
-  if err != nil { panic(err) }
-  entryAlbum,ok := object2.(*gtk.Entry)
-  if !ok { return nil, nil, nil, nil, err }
-  object3, err := builder.GetObject("setGenre")
-  if err != nil { panic(err) }
-  entryGenre,ok := object3.(*gtk.Entry)
-  if !ok { return nil, nil, nil, nil, err }
-  return entryTitle, entryPerformer, entryAlbum, entryGenre, nil
-}
 
-
-
-func build(ruta string) (*gtk.Builder, error)  {
+func build(ruta string) *gtk.Builder  {
   	builder, err := gtk.BuilderNew()
   	if err != nil {
-  		return nil, err
+  		panic (err)
   	}
   	if ruta != "" {
   		err = builder.AddFromFile(ruta)
   		if err != nil {
-  			return nil, errors.New("Error")
+		      errors.New("Ocurrio un error")
   		}
   	}
-  	return builder, nil
+  	return builder
 }
 
-
-func window(builder *gtk.Builder, tipo string) (*gtk.Window ,error) {
+/* Crea una ventana que cumple con el identificador*/
+func window(builder *gtk.Builder, tipo string) *gtk.Window {
   object, err := builder.GetObject(tipo)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	ventana, ok := object.(*gtk.Window)
 	if !ok {
-		return nil, err
+		errors.New("Ocurrio un error")
 	}
-	return ventana, nil
+	return ventana
 }
 
-func scrolledWindow(builder *gtk.Builder) (*gtk.ScrolledWindow, error) {
+func scrolledWindow(builder *gtk.Builder) *gtk.ScrolledWindow {
   object, err := builder.GetObject("window2")
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	ventana, ok := object.(*gtk.ScrolledWindow)
 	if !ok {
-		return nil, err
+		errors.New("Ocurrio un error")
 	}
-	return ventana, nil
+	return ventana
 }
 
-func dialog(builder *gtk.Builder) (*gtk.Dialog, error)  {
+func dialog(builder *gtk.Builder) *gtk.Dialog  {
   object, err := builder.GetObject("windowEdit")
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	ventana, ok := object.(*gtk.Dialog)
 	if !ok {
-		return nil, err
+    errors.New("Ocurrio un error")
 	}
-	return ventana, nil
+	return ventana
 }
 
 
-func button(builder *gtk.Builder, tipo string) (*gtk.Button, error)  {
+func button(builder *gtk.Builder, tipo string) *gtk.Button  {
   object, err := builder.GetObject(tipo)
   if err != nil {
     panic(err)
   }
   boton, ok := object.(*gtk.Button)
   if !ok {
-    return nil, err
+    errors.New("Ocurrio un error")
   }
-  return boton, nil
+  return boton
 }
 
-func grid(builder *gtk.Builder) (*gtk.Grid, error)  {
+func grid(builder *gtk.Builder) *gtk.Grid  {
   object, err := builder.GetObject("grid1")
   if err != nil {
     panic(err)
   }
   grid, ok := object.(*gtk.Grid)
   if !ok {
-    return nil, err
+    errors.New("Ocurrio un error")
   }
-  return grid, nil
+  return grid
 }
 
-func entry(builder *gtk.Builder, id string) (*gtk.Entry, error) {
+func entry(builder *gtk.Builder, id string) *gtk.Entry {
   object, err := builder.GetObject(id)
   if err != nil {
     panic(err)
   }
   entry, ok := object.(*gtk.Entry)
   if !ok {
-    return nil, err
+		errors.New("Ocurrio un error")
   }
-  return entry, nil
+  return entry
 }
 
 func creaColumna(nombre string, id int) *gtk.TreeViewColumn {
@@ -359,7 +341,7 @@ func creaColumna(nombre string, id int) *gtk.TreeViewColumn {
 	}
 	columna, err := gtk.TreeViewColumnNewWithAttribute(nombre, cellRenderer, "text", id)
 	if err != nil {
-		panic(err)
+		errors.New("Ocurrio un error")
 	}
 	return columna
 }
