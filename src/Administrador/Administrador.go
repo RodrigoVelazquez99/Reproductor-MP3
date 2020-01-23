@@ -85,6 +85,7 @@ func cambiaRenglon(nuevoTitulo string, nuevoInterprete string, nuevoAlbum string
     stm1.Close()
   }
 
+  /* Inserta un grupo a la base de datos */
   func InsetaInterpreteGrupo(group_n string, group_sd string, group_ed string){
     stm, err := base.Prepare("INSERT INTO groups (name, start_date, end_date) VALUES (?,?,?)")
     if err != nil { panic(err) }
@@ -96,6 +97,8 @@ func cambiaRenglon(nuevoTitulo string, nuevoInterprete string, nuevoAlbum string
     stm1.Close()
   }
 
+  /* Inserta la ruta de una imagen a la base de datos */
+  //func InsertaImagen(rutaCancion string, rutaImagen string ){}
 
 /**
 * Busca las canciones que coinciden con la entrada y las agrega
@@ -234,26 +237,26 @@ func buscaCancion(banderas []string, coincidencias []string) error {
 
 func BuscaPorRuta(ruta string) []string {
   etiquetas := make([]string, 0)
-  tabla,err := base.Query("SELECT title, id_performer, id_album, genre FROM rolas WHERE path=?",ruta)
+  tabla,err := base.Query("SELECT title, id_performer, id_album, genre, image FROM rolas WHERE path=?",ruta)
   if err != nil { panic(err) }
-  var titulo, genero string
+  var titulo, genero, image string
   var idInterprete, idAlbum int
   if tabla.Next() {
-    tabla.Scan(&titulo, &idInterprete, &idAlbum, &genero)
+    tabla.Scan(&titulo, &idInterprete, &idAlbum, &genero, &image)
     album := Buscador.BuscaAlbum(idAlbum, base)
     interprete := Buscador.BuscaInterprete(idInterprete, base)
-    etiquetas = append(etiquetas, titulo, interprete, album, genero)
+    etiquetas = append(etiquetas, titulo, interprete, album, genero, image)
   }
   tabla.Close()
   return etiquetas
 }
 
-func CambiaEtiquetas(ruta string, nuevoTitulo string, nuevoInterprete string, nuevoAlbum string, nuevoGenero string) {
+func CambiaEtiquetas(ruta string, nuevoTitulo string, nuevoInterprete string, nuevoAlbum string, nuevoGenero string, nuevaImagen string) {
   idAlbum := Buscador.ObtenerIdAlbum(base, nuevoAlbum)
   idInterprete := Buscador.ObtenerIdInterprete(base, nuevoInterprete)
-  tabla, err := base.Prepare("UPDATE rolas SET id_album=?, id_performer=?, path=?, title=?, genre=? WHERE path=?")
+  tabla, err := base.Prepare("UPDATE rolas SET id_album=?, id_performer=?, path=?, title=?, genre=?, image=? WHERE path=?")
   if err != nil { panic(err) }
-  tabla.Exec(idAlbum, idInterprete, ruta, nuevoTitulo, nuevoGenero, ruta)
+  tabla.Exec(idAlbum, idInterprete, ruta, nuevoTitulo, nuevoGenero, nuevaImagen, ruta)
   cambiaRenglon(nuevoTitulo, nuevoInterprete, nuevoAlbum, nuevoGenero, ruta)
   tabla.Close()
 }

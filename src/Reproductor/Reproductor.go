@@ -4,6 +4,7 @@ import(
   "github.com/gotk3/gotk3/gtk"
   "errors"
   "github.com/gotk3/gotk3/glib"
+  "github.com/gotk3/gotk3/gdk"
   "github.com/RodrigoVelazquez99/Reproductor-MP3/src/Administrador"
   "github.com/RodrigoVelazquez99/Reproductor-MP3/src/Minero"
 )
@@ -27,11 +28,21 @@ func main()  {
   ventana2 := scrolledWindow(builder)
   ventanaAdvertencia := window(builder, "windowAdvertencia")
 
+  /* La portada de la cancion actual */
+  imagenCancion := imagen(builder, "songImage")
+  imagenP, err := gdk.PixbufNewFromFile("/home/rodrigofvc/go/src/github.com/RodrigoVelazquez99/Reproductor-MP3/src/Imagenes/default_image.jpg")
+  if err != nil {
+    /* La imagen por default no existe*/
+    errors.New("La imagen por default no existe")
+  }
+  imagenCancion.SetFromPixbuf(imagenP)
+  imagenCancion.SetPixelSize(200)
+
   boton := button(builder, "button1")
 
   botonEditar := button(builder, "editTags")
-  botonGuardar := button(builder, "editTag")
-  botonCancelarEditar := button(builder, "cancelTag")
+  botonGuardar := button(builder, "editTag1")
+  botonCancelarEditar := button(builder, "cancelTag1")
 
   botonMinero := button(builder,"buttonMiner")
   botonMinar := button(builder, "buttonMiner1")
@@ -47,6 +58,8 @@ func main()  {
   performerEntry := entry(builder, "setPerformer")
   albumEntry := entry(builder, "setAlbum")
   genreEntry := entry(builder, "setGenre")
+  imageEntry := entry(builder, "setImage")
+
   /* La ruta de la cancion que ha sido seleccionada */
   var rutaCancionSeleccionada  string
 
@@ -195,8 +208,9 @@ func main()  {
     nuevoInterprete, err := performerEntry.GetText()
     nuevoAlbum, err := albumEntry.GetText()
     nuevoGenero, err := genreEntry.GetText()
+    nuevaImagen, err := imageEntry.GetText()
     if err != nil { panic(err) }
-    Administrador.CambiaEtiquetas(rutaCancionSeleccionada, nuevoTitulo, nuevoInterprete, nuevoAlbum, nuevoGenero)
+    Administrador.CambiaEtiquetas(rutaCancionSeleccionada, nuevoTitulo, nuevoInterprete, nuevoAlbum, nuevoGenero, nuevaImagen)
     listStore.Clear()
     renglones := Administrador.ObtenerRenglones()
     actualizaLista(listStore, renglones)
@@ -216,6 +230,7 @@ func main()  {
       performerEntry.SetText(etiquetas[1])
       albumEntry.SetText(etiquetas[2])
       genreEntry.SetText(etiquetas[3])
+      imageEntry.SetText(etiquetas[4])
       ventanaEditar.ShowAll()
     }
   })
@@ -223,14 +238,24 @@ func main()  {
   seleccion, err := treeView.GetSelection()
 	if err != nil { panic(err) }
 	seleccion.SetMode(gtk.SELECTION_SINGLE)
+  /* Se selecciona una cancion del TreeView */
   seleccion.Connect("changed", func ()  {
     model, iter, ok := seleccion.GetSelected()
     if ok {
       columna4,_ := model.(*gtk.TreeModel).GetValue(iter,4)
       ruta,_ := columna4.GetString()
       rutaCancionSeleccionada = ruta
+      etiquetasCancionSeleccionada := Administrador.BuscaPorRuta(ruta)
+      imagenP, err = gdk.PixbufNewFromFile(etiquetasCancionSeleccionada[4])
+      if err != nil {
+        /* La cancion no tiene imagen */
+        imagenP, _ = gdk.PixbufNewFromFile("/home/rodrigofvc/go/src/github.com/RodrigoVelazquez99/Reproductor-MP3/src/Imagenes/default_image.jpg")
+      }
+      imagenCancion.SetFromPixbuf(imagenP)
+      imagenCancion.SetPixelSize(200)
       }
   })
+
   ventana2.Add(treeView)
   ventana2.ShowAll()
   ventanaEditar.Connect("destroy", func () {
@@ -332,6 +357,16 @@ func entry(builder *gtk.Builder, id string) *gtk.Entry {
 		errors.New("Ocurrio un error")
   }
   return entry
+}
+
+func imagen(builder *gtk.Builder, id string) *gtk.Image{
+  object, err := builder.GetObject(id)
+  if err != nil { panic (err) }
+  image, ok := object.(*gtk.Image)
+  if !ok {
+    errors.New("Ocurrio un error")
+  }
+  return image
 }
 
 func creaColumna(nombre string, id int) *gtk.TreeViewColumn {

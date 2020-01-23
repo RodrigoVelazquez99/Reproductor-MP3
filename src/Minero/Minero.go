@@ -114,7 +114,7 @@ func creaBase() *sql.DB {
   albumsTable, err6 :=  db.Prepare(ALBUMS_TABLE)
   manejaError(err6)
   albumsTable.Exec()
-  ROLAS_TABLE := "CREATE TABLE IF NOT EXISTS rolas (id_rola INTEGER PRIMARY KEY, id_performer INTEGER, id_album INTEGER, path TEXT, title TEXT, track INTEGER, year INTEGER, genre TEXT, FOREIGN KEY (id_performer) REFERENCES performers(id_performer), FOREIGN KEY (id_album) REFERENCES albums(id_album))"
+  ROLAS_TABLE := "CREATE TABLE IF NOT EXISTS rolas (id_rola INTEGER PRIMARY KEY, id_performer INTEGER, id_album INTEGER, path TEXT, title TEXT, track INTEGER, year INTEGER, genre TEXT, image TEXT, FOREIGN KEY (id_performer) REFERENCES performers(id_performer), FOREIGN KEY (id_album) REFERENCES albums(id_album))"
   rolasTable, err7 := db.Prepare(ROLAS_TABLE)
   manejaError(err7)
   rolasTable.Exec()
@@ -186,9 +186,9 @@ func registraAlbum(carpeta string, album string, año int, db *sql.DB)  {
 }
 
 func registraRola(ruta string, titulo string, track int, año int, genero string, idAlbum int, idPerformer int, db *sql.DB)   {
-  tabla1, err := db.Prepare("INSERT INTO rolas (path, title, track, year, genre, id_album, id_performer) VALUES (?, ?, ?, ?, ?, ?, ?)")
+  tabla1, err := db.Prepare("INSERT INTO rolas (image, path, title, track, year, genre, id_album, id_performer) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
   manejaError(err)
-  tabla1.Exec(ruta,titulo, track, año, genero, idAlbum, idPerformer)
+  tabla1.Exec("no_image", ruta, titulo, track, año, genero, idAlbum, idPerformer)
   tabla1.Close()
 }
 
