@@ -58,7 +58,14 @@ func main()  {
   performerEntry := entry(builder, "setPerformer")
   albumEntry := entry(builder, "setAlbum")
   genreEntry := entry(builder, "setGenre")
-  imageEntry := entry(builder, "setImage")
+
+  /* Boton para agregar la ventana de seleccionar un archivo de imagen de cancion */
+  botonChooserDialog := button(builder, "setImage")
+
+  /* Cuadro para escoger la imagen para la portada de la cancio */
+  fileChooserDialog := fileChooser(builder, "fileChooserDialog")
+  botonCancelFile := button(builder, "cancelFileButton")
+  botonAddFile := button(builder, "addFileButton")
 
   /* La ruta de la cancion que ha sido seleccionada */
   var rutaCancionSeleccionada  string
@@ -208,7 +215,7 @@ func main()  {
     nuevoInterprete, err := performerEntry.GetText()
     nuevoAlbum, err := albumEntry.GetText()
     nuevoGenero, err := genreEntry.GetText()
-    nuevaImagen, err := imageEntry.GetText()
+    nuevaImagen := fileChooserDialog.GetFilename()
     if err != nil { panic(err) }
     Administrador.CambiaEtiquetas(rutaCancionSeleccionada, nuevoTitulo, nuevoInterprete, nuevoAlbum, nuevoGenero, nuevaImagen)
     listStore.Clear()
@@ -230,9 +237,23 @@ func main()  {
       performerEntry.SetText(etiquetas[1])
       albumEntry.SetText(etiquetas[2])
       genreEntry.SetText(etiquetas[3])
-      imageEntry.SetText(etiquetas[4])
       ventanaEditar.ShowAll()
     }
+  })
+
+  /* Se abre la ventana para escoger el archivo */
+  botonChooserDialog.Connect("clicked", func () {
+    fileChooserDialog.ShowAll()
+  })
+
+  /* Se presiona el boton de agregar un archivo como imagen de cancion */
+  botonAddFile.Connect("clicked", func () {
+    fileChooserDialog.Hide()
+  })
+
+  /* Se cancela la opcion de agregar un archivo como imagen de cancion */
+  botonCancelFile.Connect("clicked", func (){
+    fileChooserDialog.Hide()
   })
 
   seleccion, err := treeView.GetSelection()
@@ -367,6 +388,16 @@ func imagen(builder *gtk.Builder, id string) *gtk.Image{
     errors.New("Ocurrio un error")
   }
   return image
+}
+
+func fileChooser(builder *gtk.Builder, id string) *gtk.FileChooserDialog {
+  object, err := builder.GetObject(id)
+  if err != nil { panic (err) }
+  fileChooser, ok := object.(*gtk.FileChooserDialog)
+  if !ok {
+    errors.New("Ocurrio un error")
+  }
+  return fileChooser
 }
 
 func creaColumna(nombre string, id int) *gtk.TreeViewColumn {
