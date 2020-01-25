@@ -41,6 +41,15 @@ $ go get github.com/gotk3/gotk3/gtk
 ```bash
 $ go get github.com/mattn/go-sqlite3
 ```
+```bash
+$ go get -u github.com/faiface/beep
+```
+```bash
+$ go get github.com/hajimehoshi/oto
+```
+```bash
+$ go get github.com/pkg/errors
+```
 
 ### Dependecias
 
@@ -60,6 +69,12 @@ $ sudo apt-get install libglib2.0-dev
 ```bash
 $ sudo apt-get install build-essential
 ```
+```bash
+$ sudo apt-get install libasound2-dev
+```
+
 ### Errores Conocidos
 
 Faltan pruebas unitarias.
+
+Al reproducir una canción, la interfaz se bloquea hasta que se termine de reproducir la canción.

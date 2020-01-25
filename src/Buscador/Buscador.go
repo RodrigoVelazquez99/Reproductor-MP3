@@ -12,6 +12,17 @@ func ObtenerIdAlbum(db *sql.DB, album string) int {
   var id int
   if tabla.Next() {
     tabla.Scan(&id)
+  } else {
+    /* El album no existe, entonces se crea */
+    stm, _ := db.Prepare("INSERT INTO albums (path, name, year) VALUES (?,?,?)")
+    stm.Exec("no_path", album, "2020")
+    stm.Close()
+    stm1, err1 := db.Query("SELECT id_album FROM albums WHERE name=?", album)
+    if err1 != nil { panic(err1) }
+    if stm1.Next() {
+      stm1.Scan(&id)
+    }
+    stm1.Close()
   }
   tabla.Close()
   return id

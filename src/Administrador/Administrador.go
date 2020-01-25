@@ -259,4 +259,8 @@ func CambiaEtiquetas(ruta string, nuevoTitulo string, nuevoInterprete string, nu
   tabla.Exec(idAlbum, idInterprete, ruta, nuevoTitulo, nuevoGenero, nuevaImagen, ruta)
   cambiaRenglon(nuevoTitulo, nuevoInterprete, nuevoAlbum, nuevoGenero, ruta)
   tabla.Close()
+  stm, err1 := base.Prepare("UPDATE rolas SET image=? WHERE id_album=?")
+  if err1 != nil { panic(err) }
+  stm.Exec(nuevaImagen, idAlbum)
+  stm.Close()
 }

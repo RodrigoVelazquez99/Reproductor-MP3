@@ -1,6 +1,13 @@
 package main
 
 import(
+  "log"
+	"os"
+	"time"
+	"github.com/faiface/beep"
+	"github.com/faiface/beep/mp3"
+	"github.com/faiface/beep/speaker"
+  "strings"
   "github.com/gotk3/gotk3/gtk"
   "errors"
   "github.com/gotk3/gotk3/glib"
@@ -53,19 +60,25 @@ func main()  {
 
   busqueda := entry(builder, "entry1")
 
+  /* Botones para reproducir canciones */
+  botonPlay := button(builder, "buttonPlay")
+  botonPause := button(builder, "buttonPause")
+  pause := false
+  /*streamer beep.StreamSeekCloser
+  format beep.Format
+  ctrl*/
+
+  //botonLeft := button(builder, "buttonLeft")
+  //botonRight := button(builder, "buttonRight")
+
   /* Entradas para la opcion de editar las etiquetas de una cancion */
   titleEntry := entry (builder, "setTitle")
   performerEntry := entry(builder, "setPerformer")
   albumEntry := entry(builder, "setAlbum")
   genreEntry := entry(builder, "setGenre")
 
-  /* Boton para agregar la ventana de seleccionar un archivo de imagen de cancion */
-  botonChooserDialog := button(builder, "setImage")
-
-  /* Cuadro para escoger la imagen para la portada de la cancio */
-  fileChooserDialog := fileChooser(builder, "fileChooserDialog")
-  botonCancelFile := button(builder, "cancelFileButton")
-  botonAddFile := button(builder, "addFileButton")
+  /* Para poder abrir una ventana y escoger el archivo para imagen de la cancion */
+  botonChooser := buttonChoose(builder, "buttonChooser")
 
   /* La ruta de la cancion que ha sido seleccionada */
   var rutaCancionSeleccionada  string
@@ -211,17 +224,26 @@ func main()  {
   * se oculta la ventana de editar
   */
   botonGuardar.Connect("clicked", func ()  {
-    nuevoTitulo, err := titleEntry.GetText()
-    nuevoInterprete, err := performerEntry.GetText()
-    nuevoAlbum, err := albumEntry.GetText()
-    nuevoGenero, err := genreEntry.GetText()
-    nuevaImagen := fileChooserDialog.GetFilename()
-    if err != nil { panic(err) }
-    Administrador.CambiaEtiquetas(rutaCancionSeleccionada, nuevoTitulo, nuevoInterprete, nuevoAlbum, nuevoGenero, nuevaImagen)
-    listStore.Clear()
-    renglones := Administrador.ObtenerRenglones()
-    actualizaLista(listStore, renglones)
-    ventanaEditar.Hide()
+    nuevoTitulo, _ := titleEntry.GetText()
+    nuevoInterprete, _ := performerEntry.GetText()
+    nuevoAlbum, _ := albumEntry.GetText()
+    nuevoGenero, _ := genreEntry.GetText()
+    nuevaImagen := botonChooser.GetFilename()
+    if nuevaImagen == "" {
+      // No se escogio una imagen
+      nuevaImagen = "/home/rodrigofvc/go/src/github.com/RodrigoVelazquez99/Reproductor-MP3/src/Imagenes/default_image.jpg"
+    }
+    /* Revisamos si el archivo es una imagen */
+    if !(strings.HasSuffix(nuevaImagen, ".jpg") ||
+        strings.HasSuffix(nuevaImagen, ".png")) {
+      windowEntryReq.ShowAll()
+    } else {
+      Administrador.CambiaEtiquetas(rutaCancionSeleccionada, nuevoTitulo, nuevoInterprete, nuevoAlbum, nuevoGenero, nuevaImagen)
+      listStore.Clear()
+      renglones := Administrador.ObtenerRenglones()
+      actualizaLista(listStore, renglones)
+      ventanaEditar.Hide()
+    }
   })
 
   /* Cuando de cancela la accion de editar etiquetas */
@@ -239,21 +261,6 @@ func main()  {
       genreEntry.SetText(etiquetas[3])
       ventanaEditar.ShowAll()
     }
-  })
-
-  /* Se abre la ventana para escoger el archivo */
-  botonChooserDialog.Connect("clicked", func () {
-    fileChooserDialog.ShowAll()
-  })
-
-  /* Se presiona el boton de agregar un archivo como imagen de cancion */
-  botonAddFile.Connect("clicked", func () {
-    fileChooserDialog.Hide()
-  })
-
-  /* Se cancela la opcion de agregar un archivo como imagen de cancion */
-  botonCancelFile.Connect("clicked", func (){
-    fileChooserDialog.Hide()
   })
 
   seleccion, err := treeView.GetSelection()
@@ -276,6 +283,42 @@ func main()  {
       imagenCancion.SetPixelSize(200)
       }
   })
+
+  /* Se presiona el boton para reproducir una cancion */
+  botonPlay.Connect("clicked", func () {
+
+      f, err := os.Open(rutaCancionSeleccionada)
+    	if err != nil { log.Fatal(err) }
+    	streamer, format, err := mp3.Decode(f)
+    	if err != nil { log.Fatal(err) }
+    	defer streamer.Close()
+
+    	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+/*
+      ctrl := &beep.Ctrl{Streamer: beep.Loop(1, streamer), Paused: false}
+	    speaker.Play(ctrl)
+
+      for {
+        if pause {
+          speaker.Lock()
+          ctrl.Paused = !ctrl.Paused
+          speaker.Unlock()
+          break
+        }
+      }*/
+      done := make(chan bool)
+      	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
+      		done <- true
+      	})))
+
+      <-done      
+  })
+
+  // Se presiona el boton de pausa
+  botonPause.Connect("clicked", func () {
+    pause = true
+  })
+
 
   ventana2.Add(treeView)
   ventana2.ShowAll()
@@ -390,10 +433,10 @@ func imagen(builder *gtk.Builder, id string) *gtk.Image{
   return image
 }
 
-func fileChooser(builder *gtk.Builder, id string) *gtk.FileChooserDialog {
+func buttonChoose(builder *gtk.Builder, id string) *gtk.FileChooserButton {
   object, err := builder.GetObject(id)
   if err != nil { panic (err) }
-  fileChooser, ok := object.(*gtk.FileChooserDialog)
+  fileChooser, ok := object.(*gtk.FileChooserButton)
   if !ok {
     errors.New("Ocurrio un error")
   }
