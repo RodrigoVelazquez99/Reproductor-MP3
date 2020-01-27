@@ -77,4 +77,4 @@ $ sudo apt-get install libasound2-dev
 
 Faltan pruebas unitarias.
 
-Al reproducir una canción, la interfaz se bloquea hasta que se termine de reproducir la canción.
+Solo se pueden reproducir canciones pero no pausarlas.

@@ -286,32 +286,7 @@ func main()  {
 
   /* Se presiona el boton para reproducir una cancion */
   botonPlay.Connect("clicked", func () {
-
-      f, err := os.Open(rutaCancionSeleccionada)
-    	if err != nil { log.Fatal(err) }
-    	streamer, format, err := mp3.Decode(f)
-    	if err != nil { log.Fatal(err) }
-    	defer streamer.Close()
-
-    	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-/*
-      ctrl := &beep.Ctrl{Streamer: beep.Loop(1, streamer), Paused: false}
-	    speaker.Play(ctrl)
-
-      for {
-        if pause {
-          speaker.Lock()
-          ctrl.Paused = !ctrl.Paused
-          speaker.Unlock()
-          break
-        }
-      }*/
-      done := make(chan bool)
-      	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
-      		done <- true
-      	})))
-
-      <-done      
+    go play(rutaCancionSeleccionada)
   })
 
   // Se presiona el boton de pausa
@@ -333,6 +308,34 @@ func main()  {
 	ventana.ShowAll()
 	gtk.Main()
 }
+
+func play(rutaCancionSeleccionada string) {
+  f, err := os.Open(rutaCancionSeleccionada)
+  if err != nil { log.Fatal(err) }
+  streamer, format, err := mp3.Decode(f)
+  if err != nil { log.Fatal(err) }
+  defer streamer.Close()
+
+  speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+  /*
+  ctrl := &beep.Ctrl{Streamer: beep.Loop(1, streamer), Paused: false}
+  speaker.Play(ctrl)
+
+  for {
+    if pause {
+      speaker.Lock()
+      ctrl.Paused = !ctrl.Paused
+      speaker.Unlock()
+      break
+    }
+    }*/
+    done := make(chan bool)
+    speaker.Play(beep.Seq(streamer, beep.Callback(func() {
+      done <- true
+      })))
+
+      <-done
+    }
 
 
 func build(ruta string) *gtk.Builder  {
