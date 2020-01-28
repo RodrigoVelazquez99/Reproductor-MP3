@@ -1,6 +1,7 @@
 package main
 
 import(
+  "fmt"
   "log"
 	"os"
 	"time"
@@ -24,6 +25,10 @@ const (
   COLUMN_PATH
   path = "../Interfaz/Interfaz.glade"
 )
+
+var streamer beep.StreamSeekCloser
+var format beep.Format
+var ctrl *beep.Ctrl
 
 func main()  {
   Administrador.IniciaBase()
@@ -63,10 +68,7 @@ func main()  {
   /* Botones para reproducir canciones */
   botonPlay := button(builder, "buttonPlay")
   botonPause := button(builder, "buttonPause")
-  pause := false
-  /*streamer beep.StreamSeekCloser
-  format beep.Format
-  ctrl*/
+  //pause := false
 
   //botonLeft := button(builder, "buttonLeft")
   //botonRight := button(builder, "buttonRight")
@@ -291,7 +293,9 @@ func main()  {
 
   // Se presiona el boton de pausa
   botonPause.Connect("clicked", func () {
-    pause = true
+      speaker.Lock()
+      ctrl.Paused = !ctrl.Paused
+      speaker.Unlock()
   })
 
 
@@ -310,32 +314,22 @@ func main()  {
 }
 
 func play(rutaCancionSeleccionada string) {
-  f, err := os.Open(rutaCancionSeleccionada)
-  if err != nil { log.Fatal(err) }
-  streamer, format, err := mp3.Decode(f)
-  if err != nil { log.Fatal(err) }
-  defer streamer.Close()
+    f, err := os.Open(rutaCancionSeleccionada)
+    if err != nil { log.Fatal(err) }
+    streamer, format, err = mp3.Decode(f)
+    if err != nil { log.Fatal(err) }
+    defer streamer.Close()
 
-  speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-  /*
-  ctrl := &beep.Ctrl{Streamer: beep.Loop(1, streamer), Paused: false}
-  speaker.Play(ctrl)
+    speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+    ctrl = &beep.Ctrl{Streamer: beep.Loop(-1, streamer), Paused: false}
+    speaker.Play(ctrl)
 
-  for {
-    if pause {
-      speaker.Lock()
-      ctrl.Paused = !ctrl.Paused
-      speaker.Unlock()
-      break
-    }
-    }*/
-    done := make(chan bool)
-    speaker.Play(beep.Seq(streamer, beep.Callback(func() {
-      done <- true
-      })))
+    	for {
+    		fmt.Println("Reproduciendo...")
+    		fmt.Scanln()
+    	}
+}
 
-      <-done
-    }
 
 
 func build(ruta string) *gtk.Builder  {

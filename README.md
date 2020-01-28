@@ -76,5 +76,3 @@ $ sudo apt-get install libasound2-dev
 ### Errores Conocidos
 
 Faltan pruebas unitarias.
-
-Solo se pueden reproducir canciones pero no pausarlas.
