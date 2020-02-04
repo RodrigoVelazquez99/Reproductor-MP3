@@ -76,3 +76,5 @@ $ sudo apt-get install libasound2-dev
 ### Errores Conocidos
 
 Faltan pruebas unitarias.
+
+La barra de progreso no avanza al ritmo de la canción, pues no he encontrado la manera de obtener la duración de cada canción. 

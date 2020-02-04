@@ -26,9 +26,12 @@ const (
   path = "../Interfaz/Interfaz.glade"
 )
 
+/* Variables para controlar la reproduccion de musica */
 var streamer beep.StreamSeekCloser
 var format beep.Format
 var ctrl *beep.Ctrl
+/* La barra de musica */
+var progressBar *gtk.ProgressBar
 
 func main()  {
   Administrador.IniciaBase()
@@ -68,7 +71,10 @@ func main()  {
   /* Botones para reproducir canciones */
   botonPlay := button(builder, "buttonPlay")
   botonPause := button(builder, "buttonPause")
+  botonNext := button(builder, "buttonRight")
+  botonPrev := button(builder, "buttonLeft")
   //pause := false
+  progressBar = progress(builder, "progressBar")
 
   //botonLeft := button(builder, "buttonLeft")
   //botonRight := button(builder, "buttonRight")
@@ -266,7 +272,7 @@ func main()  {
   })
 
   seleccion, err := treeView.GetSelection()
-	if err != nil { panic(err) }
+  if err != nil { panic(err) }
 	seleccion.SetMode(gtk.SELECTION_SINGLE)
   /* Se selecciona una cancion del TreeView */
   seleccion.Connect("changed", func ()  {
@@ -288,6 +294,8 @@ func main()  {
 
   /* Se presiona el boton para reproducir una cancion */
   botonPlay.Connect("clicked", func () {
+    progressBar.SetFraction(0.00)
+    go status()
     go play(rutaCancionSeleccionada)
   })
 
@@ -298,6 +306,38 @@ func main()  {
       speaker.Unlock()
   })
 
+  // Se presiona el boton de siguiente
+  botonNext.Connect("clicked", func () {
+    renglones := Administrador.ObtenerRenglones()
+    i := 4
+    for i < len(renglones){
+      if (renglones[i] == rutaCancionSeleccionada) {
+        if (len(renglones) > i + 5){
+          rutaCancionSeleccionada = renglones[i+5]
+          go play(rutaCancionSeleccionada)
+        }
+        break
+      }
+      i += 5
+    }
+  })
+
+
+  // Se presiona el boton de anterior
+  botonPrev.Connect("clicked", func () {
+    renglones := Administrador.ObtenerRenglones()
+    i := 4
+    for i < len(renglones){
+      if (renglones[i] == rutaCancionSeleccionada) {
+        if (i - 5 >= 4){
+          rutaCancionSeleccionada = renglones[i-5]
+          go play(rutaCancionSeleccionada)
+        }
+        break
+      }
+      i += 5
+    }
+  })
 
   ventana2.Add(treeView)
   ventana2.ShowAll()
@@ -311,6 +351,16 @@ func main()  {
   })
 	ventana.ShowAll()
 	gtk.Main()
+}
+
+/* Controla el movimiento de la barra de progreso */
+func status() {
+  i := 0.0
+  for i <= 1.0 {
+    time.Sleep(1 * time.Second)
+    i += .01
+    progressBar.SetFraction(i)
+  }
 }
 
 func play(rutaCancionSeleccionada string) {
@@ -396,6 +446,20 @@ func button(builder *gtk.Builder, tipo string) *gtk.Button  {
   return boton
 }
 
+func progress(builder *gtk.Builder, tipo string) *gtk.ProgressBar {
+  object, err := builder.GetObject(tipo)
+  if err != nil {
+    panic(err)
+  }
+  p, ok := object.(*gtk.ProgressBar)
+  if !ok {
+    errors.New("Ocurrio un error")
+  }
+  return p
+}
+
+
+
 func grid(builder *gtk.Builder) *gtk.Grid  {
   object, err := builder.GetObject("grid1")
   if err != nil {
@@ -455,10 +519,10 @@ func creaColumna(nombre string, id int) *gtk.TreeViewColumn {
 func creaTreeView() (*gtk.TreeView, *gtk.ListStore) {
 	treeView, err := gtk.TreeViewNew()
 	if err != nil { panic(err) }
-	treeView.AppendColumn(creaColumna("Title", COLUMN_TITLE))
-	treeView.AppendColumn(creaColumna("Performer", COLUMN_PERFORMER))
+	treeView.AppendColumn(creaColumna("Titulo", COLUMN_TITLE))
+	treeView.AppendColumn(creaColumna("Artista", COLUMN_PERFORMER))
   treeView.AppendColumn(creaColumna("Album", COLUMN_ALBUM))
-	treeView.AppendColumn(creaColumna("Genre", COLUMN_GENRE))
+	treeView.AppendColumn(creaColumna("Genero", COLUMN_GENRE))
   Paths := creaColumna("Path", COLUMN_PATH)
   Paths.SetVisible(false)
   treeView.AppendColumn(Paths)
